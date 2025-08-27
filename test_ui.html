@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>NER Interface UI Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test { margin: 10px 0; padding: 10px; border: 1px solid #ddd; }
+        .pass { background: #d4edda; }
+        .fail { background: #f8d7da; }
+        .pending { background: #fff3cd; }
+        h2 { color: #333; }
+        pre { background: #f4f4f4; padding: 10px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>NER Interface Quality Test Report</h1>
+    <div id="results"></div>
+
+    <script>
+        const tests = [];
+        const baseUrl = 'http://localhost:8080';
+        
+        async function runTests() {
+            const results = document.getElementById('results');
+            results.innerHTML = '<h2>Running Tests...</h2>';
+            
+            // Test 1: Interface Loading
+            await testInterfaceLoading();
+            
+            // Test 2: Label Interactions
+            await testLabelInteractions();
+            
+            // Test 3: Modal Operations
+            await testModalOperations();
+            
+            // Display results
+            displayResults();
+        }
+        
+        async function testInterfaceLoading() {
+            try {
+                const response = await fetch(baseUrl);
+                const html = await response.text();
+                
+                tests.push({
+                    name: 'Interface loads successfully',
+                    status: response.status === 200 ? 'pass' : 'fail',
+                    details: `Status: ${response.status}`
+                });
+                
+                tests.push({
+                    name: 'Contains label buttons',
+                    status: html.includes('label-item') ? 'pass' : 'fail',
+                    details: `Found: ${(html.match(/label-item/g) || []).length} label buttons`
+                });
+                
+                tests.push({
+                    name: 'Contains modals',
+                    status: html.includes('addLabelModal') && html.includes('editLabelModal') ? 'pass' : 'fail',
+                    details: 'Add and Edit modals present'
+                });
+                
+            } catch (error) {
+                tests.push({
+                    name: 'Interface Loading',
+                    status: 'fail',
+                    details: error.message
+                });
+            }
+        }
+        
+        async function testLabelInteractions() {
+            // Test original labels
+            const originalLabels = ['PER', 'ORG', 'LOC', 'MISC'];
+            
+            for (const label of originalLabels) {
+                try {
+                    const response = await fetch(`${baseUrl}/api/tags/${label}`);
+                    const data = await response.json();
+                    
+                    tests.push({
+                        name: `Original label ${label} accessible`,
+                        status: response.status === 200 ? 'pass' : 'fail',
+                        details: `ID: ${data.id}, Background: ${data.background}`
+                    });
+                } catch (error) {
+                    tests.push({
+                        name: `Original label ${label} test`,
+                        status: 'fail',
+                        details: error.message
+                    });
+                }
+            }
+        }
+        
+        async function testModalOperations() {
+            // Test CRUD operations
+            const testLabel = {
+                value: 'UI_TEST_' + Date.now(),
+                background: '#' + Math.floor(Math.random()*16777215).toString(16),
+                hotkey: 'Z',
+                description: 'UI Test Label',
+                example: 'Test Example'
+            };
+            
+            // Create
+            try {
+                const createResponse = await fetch(`${baseUrl}/api/tags`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(testLabel)
+                });
+                const created = await createResponse.json();
+                
+                tests.push({
+                    name: 'Create label via API',
+                    status: createResponse.status === 201 ? 'pass' : 'fail',
+                    details: `Created: ${created.value} with ID: ${created.id}`
+                });
+                
+                // Update
+                if (created.id) {
+                    const updateResponse = await fetch(`${baseUrl}/api/tags/${created.id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ description: 'Updated Description' })
+                    });
+                    
+                    tests.push({
+                        name: 'Update label via API',
+                        status: updateResponse.status === 200 ? 'pass' : 'fail',
+                        details: 'Description updated'
+                    });
+                    
+                    // Delete
+                    const deleteResponse = await fetch(`${baseUrl}/api/tags/${created.id}`, {
+                        method: 'DELETE'
+                    });
+                    
+                    tests.push({
+                        name: 'Delete label via API',
+                        status: deleteResponse.status === 200 ? 'pass' : 'fail',
+                        details: 'Label deleted successfully'
+                    });
+                }
+                
+            } catch (error) {
+                tests.push({
+                    name: 'CRUD Operations',
+                    status: 'fail',
+                    details: error.message
+                });
+            }
+        }
+        
+        function displayResults() {
+            const results = document.getElementById('results');
+            const passCount = tests.filter(t => t.status === 'pass').length;
+            const failCount = tests.filter(t => t.status === 'fail').length;
+            
+            let html = `
+                <h2>Test Results Summary</h2>
+                <p><strong>Total Tests:</strong> ${tests.length}</p>
+                <p><strong>Passed:</strong> ${passCount}</p>
+                <p><strong>Failed:</strong> ${failCount}</p>
+                <hr>
+                <h3>Detailed Results:</h3>
+            `;
+            
+            tests.forEach(test => {
+                html += `
+                    <div class="test ${test.status}">
+                        <strong>${test.status.toUpperCase()}: ${test.name}</strong><br>
+                        <small>${test.details}</small>
+                    </div>
+                `;
+            });
+            
+            results.innerHTML = html;
+        }
+        
+        // Run tests on load
+        window.onload = runTests;
+    </script>
+</body>
+</html>

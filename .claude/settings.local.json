@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node:*)",
+      "Bash(npm --version)",
+      "Bash(npx:*)",
+      "Bash(cat:*)",
+      "Bash(python3:*)",
+      "WebFetch(domain:labelstud.io)",
+      "Bash(git clone:*)",
+      "Bash(ss:*)",
+      "mcp__serena__onboarding",
+      "mcp__serena__read_file",
+      "mcp__serena__get_symbols_overview",
+      "mcp__serena__write_memory",
+      "mcp__serena__find_symbol",
+      "mcp__serena__search_for_pattern",
+      "mcp__serena__replace_regex",
+      "mcp__serena__replace_symbol_body",
+      "mcp__sequential-thinking__sequentialthinking",
+      "Bash(curl:*)",
+      "Bash(pkill:*)",
+      "mcp__playwright__browser_navigate"
+    ],
+    "additionalDirectories": [
+      "/home/ysy",
+      "/tmp"
+    ]
+  }
+}
