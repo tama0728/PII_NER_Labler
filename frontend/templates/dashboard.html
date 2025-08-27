@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Project List View -->
+<div id="project-list-view">
+    <div class="dashboard-header">
+        <h2>Your Projects</h2>
+        <button onclick="showCreateProjectModal()">Create New Project</button>
+    </div>
+    
+    <div id="project-list"></div>
+</div>
+
+<!-- Project Dashboard -->
+<div id="project-dashboard" style="display: none;">
+    <div class="project-header">
+        <button onclick="projectManager.backToProjectList()">← Back to Projects</button>
+        <h2 id="project-name"></h2>
+        <p id="project-description"></p>
+    </div>
+    
+    <div class="project-stats-grid">
+        <div class="stat-card">
+            <h3>Total Tasks</h3>
+            <span id="total-tasks">0</span>
+        </div>
+        <div class="stat-card">
+            <h3>Completed</h3>
+            <span id="completed-tasks">0</span>
+        </div>
+        <div class="stat-card">
+            <h3>Progress</h3>
+            <span id="completion-rate">0%</span>
+        </div>
+    </div>
+    
+    <div class="project-actions">
+        <button onclick="loadTaskList()">View Tasks</button>
+        <button onclick="showImportModal()">Import Data</button>
+        <button onclick="exportProject()">Export Project</button>
+    </div>
+</div>
+
+<!-- Create Project Modal -->
+<div id="create-project-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <h3>Create New Project</h3>
+        <form id="create-project-form">
+            <input type="text" id="new-project-name" placeholder="Project Name" required>
+            <textarea id="new-project-description" placeholder="Description (optional)"></textarea>
+            <div class="modal-actions">
+                <button type="button" onclick="hideCreateProjectModal()">Cancel</button>
+                <button type="submit">Create</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Initialize dashboard
+document.addEventListener('DOMContentLoaded', function() {
+    if (window.authManager && window.authManager.currentUser) {
+        projectManager.loadProjects();
+    }
+});
+
+// Login form handler
+document.getElementById('login-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+    
+    const success = await authManager.login(username, password);
+    if (success) {
+        projectManager.loadProjects();
+    } else {
+        alert('Invalid credentials');
+    }
+});
+
+// Create project form handler
+document.getElementById('create-project-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const name = document.getElementById('new-project-name').value;
+    const description = document.getElementById('new-project-description').value;
+    
+    const success = await projectManager.createProject(name, description);
+    if (success) {
+        hideCreateProjectModal();
+        document.getElementById('create-project-form').reset();
+    }
+});
+
+function showCreateProjectModal() {
+    document.getElementById('create-project-modal').style.display = 'block';
+}
+
+function hideCreateProjectModal() {
+    document.getElementById('create-project-modal').style.display = 'none';
+}
+
+function showImportModal() {
+    // TODO: Implement data import modal
+    alert('Data import feature coming soon!');
+}
+
+function loadTaskList() {
+    // TODO: Implement task list view
+    alert('Task list view coming soon!');
+}
+
+function exportProject() {
+    // TODO: Implement project export
+    alert('Export feature coming soon!');
+}
+</script>
+{% endblock %}
