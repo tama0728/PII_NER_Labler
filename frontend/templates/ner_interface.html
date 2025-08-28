@@ -1028,6 +1028,7 @@
                 <p>Extracted from Label Studio • Select text and click labels to annotate • Use checkboxes to filter labels • Supports overlapping annotations</p>
             </div>
             <div class="header-right">
+                <button class="btn back-btn" onclick="goBackToCollaborate()" style="margin-bottom: 8px; background: #6c757d; color: white; border: 1px solid #5a6268; padding: 6px 12px; font-size: 12px;">← 협업 페이지로 돌아가기</button>
                 <div class="user-info" id="currentUser">사용자: {{ member_name or 'Anonymous' }}</div>
                 <div class="user-role">어노테이터</div>
             </div>
@@ -1397,6 +1398,29 @@
             // 향후 어노테이션 편집 기능을 위해 예약
         }
         
+        // 협업 페이지로 돌아가기
+        function goBackToCollaborate() {
+            // 현재 작업 상태를 확인하고 경고 표시
+            const hasUnsavedWork = annotations && annotations.length > 0;
+            const hasTasks = window.uploadedTasks && window.uploadedTasks.length > 0;
+            
+            if (hasUnsavedWork || hasTasks) {
+                const confirmLeave = confirm('⚠️ 경고: 작업물이 모두 사라집니다!\n\n현재 진행 중인 모든 어노테이션과 업로드된 파일들이 삭제됩니다.\n이 작업은 되돌릴 수 없습니다.\n\n정말로 협업 페이지로 돌아가시겠습니까?');
+                if (!confirmLeave) {
+                    return;
+                }
+                
+                // 한번 더 확인
+                const finalConfirm = confirm('🚨 최종 확인\n\n모든 작업물이 영구적으로 삭제됩니다.\n정말로 계속하시겠습니까?');
+                if (!finalConfirm) {
+                    return;
+                }
+            }
+            
+            // collaborate 페이지로 리디렉션
+            window.location.href = '/collaborate';
+        }
+        
         // 현재 선택된 어노테이션 정보
         let selectedAnnotation = null;
         
@@ -1406,6 +1430,17 @@
         
         // Label selection
         function selectLabel(labelValue) {
+            // Check if the clicked label is already selected
+            if (selectedLabel === labelValue) {
+                // Deselect if already selected
+                selectedLabel = null;
+                document.querySelectorAll('.label-item').forEach(btn => {
+                    btn.classList.remove('selected');
+                });
+                console.log('Label deselected:', labelValue);
+                return;
+            }
+            
             // Remove previous selection
             document.querySelectorAll('.label-item').forEach(btn => {
                 btn.classList.remove('selected');
@@ -1658,40 +1693,56 @@
         // Add annotation with overlapping support
         async function addAnnotation(start, end, text, labels) {
             try {
-                const response = await fetch(`/api/tasks/${currentTaskId}/annotations`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ start, end, labels })
+                // 태스크 기반 시스템: 직접 현재 태스크의 annotations에 추가
+                if (!currentTask) {
+                    console.error('No current task selected');
+                    return;
+                }
+                
+                // span_id와 entity_id 할당 (기본적으로 동일)
+                const spanId = nextSpanId++;
+                const entityId = spanId;
+                
+                // 어노테이터 정보 설정
+                const currentAnnotator = document.getElementById('annotator')?.value || 'Anonymous';
+                
+                // 중첩 어노테이션 지원: 기존 어노테이션을 삭제하지 않고 새로 추가
+                const newAnnotation = {
+                    start,
+                    end,
+                    text,
+                    labels,
+                    annotator: currentAnnotator,
+                    identifier_type: 'default',
+                    span_id: spanId,
+                    entity_id: entityId
+                };
+                
+                // 현재 태스크의 annotations 배열에 추가
+                if (!currentTask.annotations) {
+                    currentTask.annotations = [];
+                }
+                currentTask.annotations.push(newAnnotation);
+                
+                // 전역 annotations 배열 업데이트 (중복 방지를 위해 태스크 배열로 동기화)
+                annotations = currentTask.annotations;
+                
+                // 어노테이션을 시작 위치순으로 정렬 (렌더링 최적화)
+                annotations.sort((a, b) => {
+                    if (a.start !== b.start) return a.start - b.start;
+                    return b.end - a.end; // 같은 시작점이면 긴 것 먼저
                 });
                 
-                if (response.ok) {
-                    // span_id와 entity_id 할당 (기본적으로 동일)
-                    const spanId = nextSpanId++;
-                    const entityId = spanId;
-                    
-                    // 중첩 어노테이션 지원: 기존 어노테이션을 삭제하지 않고 새로 추가
-                    const newAnnotation = {
-                        start,
-                        end,
-                        text,
-                        labels,
-                        annotator: currentUser.loginId,
-                        identifier_type: 'default',
-                        span_id: spanId,
-                        entity_id: entityId
-                    };
-                    annotations.push(newAnnotation);
-                    
-                    // 어노테이션을 시작 위치순으로 정렬 (렌더링 최적화)
-                    annotations.sort((a, b) => {
-                        if (a.start !== b.start) return a.start - b.start;
-                        return b.end - a.end; // 같은 시작점이면 긴 것 먼저
-                    });
-                    
-                    renderAnnotations();
-                    updateStatistics();
-                    autoSaveTask(); // Auto-save task progress
-                }
+                // 현재 태스크의 annotations도 정렬
+                currentTask.annotations.sort((a, b) => {
+                    if (a.start !== b.start) return a.start - b.start;
+                    return b.end - a.end;
+                });
+                
+                renderAnnotations();
+                updateStatistics();
+                
+                console.log('Annotation added successfully:', newAnnotation);
             } catch (error) {
                 console.error('Error adding annotation:', error);
             }
@@ -2340,6 +2391,24 @@
         // Add label to the interface dynamically
         function addLabelToInterface(label) {
             const labelsContainer = document.querySelector('.labels-panel');
+            
+            // 현재 태스크에 동적 라벨 저장
+            if (currentTask) {
+                if (!currentTask.dynamicLabels) {
+                    currentTask.dynamicLabels = [];
+                }
+                // 중복 방지
+                const existingLabel = currentTask.dynamicLabels.find(dl => dl.value === label.value);
+                if (!existingLabel) {
+                    currentTask.dynamicLabels.push({
+                        value: label.value,
+                        background: label.background,
+                        hotkey: label.hotkey,
+                        id: label.id
+                    });
+                    console.log('Dynamic label saved to current task:', label.value);
+                }
+            }
             
             // Create new label button HTML
             const labelButton = document.createElement('button');
@@ -3286,6 +3355,12 @@
             
             if (!task) return;
             
+            // 이전 태스크의 선택된 라벨 상태 초기화
+            selectedLabel = null;
+            document.querySelectorAll('.label-item').forEach(btn => {
+                btn.classList.remove('selected');
+            });
+            
             // Update UI
             document.querySelectorAll('.task-item').forEach(item => {
                 item.classList.remove('active');
@@ -3294,6 +3369,7 @@
             
             // Load task text
             currentTask = task;
+            currentTaskId = task.id; // currentTaskId 설정 추가
             currentText = task.text; // 직접 설정
             document.getElementById('textInput').value = task.text;
             // loadText() 호출하지 않음 - API 호출 불필요
@@ -3383,9 +3459,70 @@
                     // 현재 태스크의 라벨을 전역 변수에 임시 저장 (어노테이션 기능을 위해)
                     window.currentTaskLabels = taskLabels;
                     
+                    // 동적으로 추가된 라벨들도 로드
+                    if (task.dynamicLabels && Array.isArray(task.dynamicLabels)) {
+                        console.log('Loading dynamic labels:', task.dynamicLabels.length);
+                        task.dynamicLabels.forEach(dynamicLabel => {
+                            // 중복 방지 체크
+                            const existingLabel = taskLabels.find(tl => tl.value === dynamicLabel.value);
+                            if (!existingLabel) {
+                                const taskLabel = {
+                                    value: dynamicLabel.value,
+                                    background: dynamicLabel.background,
+                                    hotkey: dynamicLabel.hotkey
+                                };
+                                taskLabels.push(taskLabel);
+                                
+                                // 라벨 버튼 생성 (기존 로직과 동일)
+                                const labelBtn = document.createElement('button');
+                                labelBtn.className = 'label-item';
+                                labelBtn.style.backgroundColor = taskLabel.background;
+                                labelBtn.style.color = 'white';
+                                labelBtn.setAttribute('data-label', taskLabel.value);
+                                labelBtn.setAttribute('data-label-id', dynamicLabel.id || taskLabel.value);
+                                labelBtn.onclick = () => selectLabel(taskLabel.value);
+                                labelBtn.title = 'Click to select, Double-click to edit';
+                                
+                                const labelContent = document.createElement('div');
+                                labelContent.className = 'label-content';
+                                
+                                const labelText = document.createElement('span');
+                                labelText.className = 'label-text';
+                                labelText.textContent = taskLabel.value;
+                                labelContent.appendChild(labelText);
+                                
+                                if (taskLabel.hotkey) {
+                                    const hotkeySpan = document.createElement('span');
+                                    hotkeySpan.className = 'hotkey';
+                                    hotkeySpan.textContent = taskLabel.hotkey;
+                                    labelContent.appendChild(hotkeySpan);
+                                }
+                                
+                                const filterControls = document.createElement('div');
+                                filterControls.className = 'filter-controls';
+                                
+                                const filterCheckbox = document.createElement('div');
+                                filterCheckbox.className = 'filter-checkbox';
+                                filterCheckbox.setAttribute('data-label', taskLabel.value);
+                                filterCheckbox.onclick = (e) => {
+                                    e.stopPropagation();
+                                    toggleLabelFilter(taskLabel.value);
+                                };
+                                filterCheckbox.title = 'Toggle filter for this label';
+                                
+                                filterControls.appendChild(filterCheckbox);
+                                labelBtn.appendChild(labelContent);
+                                labelBtn.appendChild(filterControls);
+                                labelContainer.appendChild(labelBtn);
+                                
+                                console.log('Dynamic label button created:', taskLabel.value);
+                            }
+                        });
+                    }
+                    
                     // 첫 번째 라벨을 기본 선택
-                    if (task.labels.length > 0) {
-                        selectedLabel = task.labels[0];
+                    if (taskLabels.length > 0) {
+                        selectedLabel = taskLabels[0].value;
                         console.log('First label selected:', selectedLabel);
                         updateLabelSelection();
                     } else {
@@ -3402,6 +3539,22 @@
             // Load existing annotations for this task
             annotations = task.annotations || [];
             console.log('Loaded annotations:', annotations);
+            
+            // 기존 어노테이션들의 최대 span_id를 찾아서 nextSpanId 업데이트
+            let maxSpanId = 0;
+            let maxEntityId = 0;
+            annotations.forEach(ann => {
+                if (ann.span_id && ann.span_id > maxSpanId) {
+                    maxSpanId = ann.span_id;
+                }
+                if (ann.entity_id && ann.entity_id > maxEntityId) {
+                    maxEntityId = ann.entity_id;
+                }
+            });
+            
+            // 새로운 어노테이션은 기존 최대값보다 큰 ID부터 시작
+            nextSpanId = maxSpanId + 1;
+            console.log('Updated nextSpanId to:', nextSpanId, 'based on existing annotations');
             
             // 기존 어노테이션을 하이라이트와 함께 렌더링
             renderAnnotations();

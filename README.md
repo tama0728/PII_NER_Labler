@@ -2,16 +2,23 @@
 
 > **🇰🇷 한국어 버전**: [README_KR.md](./README_KR.md)를 참조하세요.
 
-## ⚠️ Known Issues
+## 🎉 Latest Updates (v3.2.0)
 
-**Current Known Issues (as of v3.1.0):**
-- 🔄 **Label Deselection Issue**: Entity Labels remain visible in panel after deselection
-- 🔄 **Navigation**: Back navigation functionality needed for task switching  
-- 🔄 **Export Feature**: Export functionality not fully implemented
+**✅ Recently Resolved Issues:**
+- ✅ **Core Annotation Fixed**: Label click → text drag highlighting now works properly
+- ✅ **ID Conflict Resolved**: span_id and entity_id collision issues fixed
+- ✅ **Statistics Accuracy**: Annotation count errors (+1 over-counting) corrected
+- ✅ **Dynamic Label Persistence**: Task-specific labels now persist during task switching
+- ✅ **Label Deselection**: Click selected label again to deselect
+- ✅ **Navigation Enhancement**: Back button added with data loss warnings
+- ✅ **Collaboration UX**: Improved member selection with existing member dropdown + new member addition
+
+**🔄 Remaining Tasks:**
+- 🔄 **Export Feature**: Export functionality not fully implemented  
 - 📝 **File Format**: CSV file processing support needed
-- 🔧 **UI Polish**: Minor UI improvements needed for better user experience
+- 🔧 **UI Polish**: Minor UI improvements for enhanced user experience
 
-> **Note**: These issues are tracked for future releases. Current core functionality works as expected.
+> **Note**: Core annotation functionality is now fully stable and production-ready.
 
 ---
 
