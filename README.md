@@ -1,5 +1,7 @@
 # KDPII NER Labeler
 
+> **🇰🇷 한국어 버전**: [README_KR.md](./README_KR.md)를 참조하세요.
+
 ## ⚠️ Known Issues
 
 **Current Known Issues (as of v3.1.0):**
