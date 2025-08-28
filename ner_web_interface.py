@@ -9,7 +9,7 @@ import json
 import os
 from ner_extractor import NERExtractor, NERLabel
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder='frontend/templates')
 
 # Initialize extractor with error handling
 try:
@@ -197,7 +197,7 @@ def main():
     os.makedirs('templates', exist_ok=True)
     
     # Verify templates exist
-    template_path = 'templates/ner_interface.html'
+    template_path = 'frontend/templates/ner_interface.html'
     if not os.path.exists(template_path):
         print(f"ERROR: Template file not found: {template_path}")
         return

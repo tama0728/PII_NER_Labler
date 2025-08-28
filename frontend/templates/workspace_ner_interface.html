@@ -430,22 +430,118 @@
         
         .upload-area {
             border: 2px dashed #ddd;
-            border-radius: 4px;
-            padding: 20px;
+            border-radius: 8px;
+            padding: 30px 20px;
             text-align: center;
-            margin-bottom: 10px;
+            margin-bottom: 15px;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.3s ease;
+            background: #fafafa;
+            position: relative;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
         }
         
         .upload-area:hover {
             border-color: #3498db;
-            background: #f8f9fa;
+            background: #f0f8ff;
+            transform: translateY(-2px);
         }
         
         .upload-area.dragover {
-            border-color: #3498db;
-            background: #e3f2fd;
+            border-color: #2ecc71;
+            background: #e8f5e8;
+            border-style: solid;
+            transform: scale(1.02);
+        }
+        
+        .upload-area.processing {
+            border-color: #f39c12;
+            background: #fef9e7;
+            pointer-events: none;
+        }
+        
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+            transition: transform 0.3s ease;
+        }
+        
+        .upload-area:hover .upload-icon {
+            transform: scale(1.1);
+        }
+        
+        .upload-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+        
+        .upload-subtitle {
+            font-size: 14px;
+            color: #7f8c8d;
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+        
+        .upload-details {
+            background: white;
+            padding: 12px 15px;
+            border-radius: 6px;
+            border: 1px solid #e8e8e8;
+            text-align: left;
+            font-size: 12px;
+            color: #555;
+            max-width: 400px;
+        }
+        
+        .file-preview {
+            margin-top: 15px;
+            max-width: 100%;
+        }
+        
+        .file-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            background: white;
+            border: 1px solid #e8e8e8;
+            border-radius: 4px;
+            margin-bottom: 5px;
+            font-size: 13px;
+        }
+        
+        .file-name {
+            font-weight: 500;
+            color: #2c3e50;
+        }
+        
+        .file-size {
+            color: #7f8c8d;
+            font-size: 11px;
+        }
+        
+        .file-status {
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .file-status.ready {
+            background: #e8f5e8;
+            color: #27ae60;
+        }
+        
+        .file-status.error {
+            background: #fdeaea;
+            color: #e74c3c;
         }
         
         .empty-state {
@@ -595,11 +691,20 @@
     <div id="uploadModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
         <div style="background: white; padding: 30px; border-radius: 8px; max-width: 500px; width: 90%;">
             <h2 style="margin-bottom: 20px;">Upload Text Files</h2>
-            <div class="upload-area" onclick="document.getElementById('fileInput').click()">
-                <p>📁 Click to select files or drag & drop</p>
-                <small>Supported: .txt, .csv, .json (Max 16MB)</small>
+            <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
+                <div class="upload-icon">📁</div>
+                <p class="upload-title">Drop files here or click to browse</p>
+                <p class="upload-subtitle">Supported formats: TXT, JSON, JSONL, CSV</p>
+                <div class="upload-details">
+                    <small>• TXT: Plain text files (line-by-line)</small><br>
+                    <small>• JSON: Array of strings or objects with text field</small><br>
+                    <small>• JSONL: JSON Lines (one JSON object per line)</small><br>
+                    <small>• CSV: First column or text column</small><br>
+                    <small style="color: #666;">Maximum file size: 16MB per file</small>
+                </div>
+                <div class="file-preview" id="filePreview" style="display: none;"></div>
             </div>
-            <input type="file" id="fileInput" class="file-upload" multiple accept=".txt,.csv,.json">
+            <input type="file" id="fileInput" class="file-upload" multiple accept=".txt,.csv,.json,.jsonl">
             <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
                 <button class="btn" onclick="hideUploadModal()">Cancel</button>
                 <button class="btn btn-primary" onclick="uploadFiles()">Upload</button>
@@ -918,24 +1023,102 @@
         
         // File upload functions
         function setupFileUpload() {
-            const uploadArea = document.querySelector('.upload-area');
+            const uploadArea = document.getElementById('uploadArea');
             const fileInput = document.getElementById('fileInput');
+            const filePreview = document.getElementById('filePreview');
             
-            // Drag and drop
+            // Drag and drop events
             uploadArea.addEventListener('dragover', (e) => {
                 e.preventDefault();
+                e.stopPropagation();
                 uploadArea.classList.add('dragover');
             });
             
-            uploadArea.addEventListener('dragleave', () => {
-                uploadArea.classList.remove('dragover');
+            uploadArea.addEventListener('dragenter', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                uploadArea.classList.add('dragover');
+            });
+            
+            uploadArea.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                // Only remove if leaving the upload area entirely
+                if (!uploadArea.contains(e.relatedTarget)) {
+                    uploadArea.classList.remove('dragover');
+                }
             });
             
             uploadArea.addEventListener('drop', (e) => {
                 e.preventDefault();
+                e.stopPropagation();
                 uploadArea.classList.remove('dragover');
-                fileInput.files = e.dataTransfer.files;
+                
+                const files = Array.from(e.dataTransfer.files);
+                handleFileSelection(files);
             });
+            
+            // File input change
+            fileInput.addEventListener('change', (e) => {
+                const files = Array.from(e.target.files);
+                handleFileSelection(files);
+            });
+        }
+        
+        function handleFileSelection(files) {
+            const filePreview = document.getElementById('filePreview');
+            const supportedTypes = ['txt', 'json', 'jsonl', 'csv'];
+            const maxSize = 16 * 1024 * 1024; // 16MB
+            
+            if (files.length === 0) return;
+            
+            let validFiles = [];
+            let previewHTML = '';
+            
+            files.forEach(file => {
+                const extension = file.name.split('.').pop().toLowerCase();
+                const isSupported = supportedTypes.includes(extension);
+                const isValidSize = file.size <= maxSize;
+                
+                let status = 'ready';
+                let statusText = 'Ready';
+                
+                if (!isSupported) {
+                    status = 'error';
+                    statusText = 'Unsupported';
+                } else if (!isValidSize) {
+                    status = 'error';
+                    statusText = 'Too large';
+                } else {
+                    validFiles.push(file);
+                }
+                
+                previewHTML += `
+                    <div class="file-item">
+                        <div>
+                            <div class="file-name">${file.name}</div>
+                            <div class="file-size">${formatFileSize(file.size)} • ${extension.toUpperCase()}</div>
+                        </div>
+                        <div class="file-status ${status}">${statusText}</div>
+                    </div>
+                `;
+            });
+            
+            filePreview.innerHTML = previewHTML;
+            filePreview.style.display = 'block';
+            
+            // Update file input with valid files only
+            const dt = new DataTransfer();
+            validFiles.forEach(file => dt.items.add(file));
+            document.getElementById('fileInput').files = dt.files;
+        }
+        
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
         }
         
         function showUploadModal() {
@@ -949,11 +1132,18 @@
         async function uploadFiles() {
             const fileInput = document.getElementById('fileInput');
             const files = fileInput.files;
+            const uploadArea = document.getElementById('uploadArea');
             
             if (files.length === 0) {
                 alert('Please select files first');
                 return;
             }
+            
+            // Show processing state
+            uploadArea.classList.add('processing');
+            const uploadTitle = uploadArea.querySelector('.upload-title');
+            const originalTitle = uploadTitle.textContent;
+            uploadTitle.textContent = 'Processing files...';
             
             const formData = new FormData();
             for (let file of files) {
@@ -969,17 +1159,55 @@
                 const result = await response.json();
                 
                 if (response.ok) {
-                    alert(`Successfully uploaded ${result.total_created_tasks} tasks from ${result.total_files} files`);
+                    // Show detailed success message
+                    let message = `✅ Upload Completed!
+
+`;
+                    message += `📁 Files processed: ${result.total_files}
+`;
+                    message += `📝 Tasks created: ${result.total_created_tasks}
+
+`;
+                    
+                    if (result.results) {
+                        message += `File Details:
+`;
+                        result.results.forEach(fileResult => {
+                            if (fileResult.status === 'success') {
+                                message += `• ${fileResult.filename}: ${fileResult.created_tasks} tasks
+`;
+                            } else {
+                                message += `• ${fileResult.filename}: ❌ ${fileResult.message}
+`;
+                            }
+                        });
+                    }
+                    
+                    alert(message);
+                    
                     hideUploadModal();
-                    fileInput.value = '';
+                    resetUploadArea();
                     await loadTasks();
                 } else {
                     alert('Upload failed: ' + result.error);
                 }
             } catch (error) {
                 console.error('Upload failed:', error);
-                alert('Upload failed');
+                alert('Network error during upload. Please try again.');
+            } finally {
+                // Reset processing state
+                uploadArea.classList.remove('processing');
+                uploadTitle.textContent = originalTitle;
             }
+        }
+        
+        function resetUploadArea() {
+            const fileInput = document.getElementById('fileInput');
+            const filePreview = document.getElementById('filePreview');
+            
+            fileInput.value = '';
+            filePreview.innerHTML = '';
+            filePreview.style.display = 'none';
         }
         
         // Export workspace

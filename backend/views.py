@@ -48,10 +48,14 @@ def workspace_annotate(workspace_id):
         labels = extractor.labels
         config_xml = extractor.get_label_config_xml()
         
+        # Get member name from session (set when joining workspace)
+        member_name = session.get('member_name', 'Anonymous')
+        
         return render_template('ner_interface.html', 
                              workspace_id=workspace_id,
                              labels=labels,
-                             config_xml=config_xml)
+                             config_xml=config_xml,
+                             member_name=member_name)
     except Exception as e:
         print(f"Error loading workspace NER interface: {e}")
         return f"Error loading workspace NER interface: {str(e)}", 500

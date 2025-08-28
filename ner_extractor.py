@@ -65,12 +65,9 @@ class NERTask:
 class NERExtractor:
     """Named Entity Recognition functionality extracted from Label Studio"""
     
-    # Default NER labels based on CoNLL-2003 NER dataset
+    # Default NER labels - empty by default, loaded from files or manually added
     DEFAULT_LABELS = [
-        NERLabel("PER", "red", "1"),      # Person
-        NERLabel("ORG", "darkorange", "2"),  # Organization
-        NERLabel("LOC", "orange", "3"),   # Location
-        NERLabel("MISC", "green", "4")    # Miscellaneous
+        # Labels will be loaded dynamically from uploaded files or added manually
     ]
     
     def __init__(self, labels: Optional[List[NERLabel]] = None):

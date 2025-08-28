@@ -205,7 +205,7 @@ def add_label(workspace_id):
     })
 
 # File upload configuration
-ALLOWED_EXTENSIONS = {'txt', 'csv', 'json'}
+ALLOWED_EXTENSIONS = {'txt', 'csv', 'json', 'jsonl'}
 MAX_FILE_SIZE = 16 * 1024 * 1024  # 16MB
 
 def allowed_file(filename):
@@ -214,8 +214,9 @@ def allowed_file(filename):
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def parse_file_content(file, filename):
-    """Parse different file formats and extract texts"""
+    """Parse different file formats and extract texts and labels"""
     texts = []
+    labels = set()  # 추출된 entity_type들을 저장
     file_extension = filename.rsplit('.', 1)[1].lower()
     
     try:
@@ -253,15 +254,32 @@ def parse_file_content(file, filename):
                     if isinstance(item, str):
                         texts.append(item.strip())
                     elif isinstance(item, dict):
-                        # Look for common text fields
-                        for key in ['text', 'content', 'sentence', 'document', 'message']:
-                            if key in item and isinstance(item[key], str):
-                                texts.append(item[key].strip())
-                                break
+                        # Check for KDPII NER format with entities
+                        if 'text' in item and 'entities' in item:
+                            texts.append(item['text'].strip())
+                            # Extract entity_types from entities array
+                            if isinstance(item['entities'], list):
+                                for entity in item['entities']:
+                                    if isinstance(entity, dict) and 'entity_type' in entity:
+                                        labels.add(entity['entity_type'])
+                        else:
+                            # Look for common text fields
+                            for key in ['text', 'content', 'sentence', 'document', 'message']:
+                                if key in item and isinstance(item[key], str):
+                                    texts.append(item[key].strip())
+                                    break
                                 
             elif isinstance(data, dict):
-                # Single object or nested structure
-                if 'texts' in data and isinstance(data['texts'], list):
+                # Single object - check for KDPII NER format first
+                if 'text' in data and 'entities' in data:
+                    texts.append(data['text'].strip())
+                    # Extract entity_types from entities array
+                    if isinstance(data['entities'], list):
+                        for entity in data['entities']:
+                            if isinstance(entity, dict) and 'entity_type' in entity:
+                                labels.add(entity['entity_type'])
+                # Other nested structures
+                elif 'texts' in data and isinstance(data['texts'], list):
                     texts = [str(t).strip() for t in data['texts'] if str(t).strip()]
                 elif 'data' in data and isinstance(data['data'], list):
                     for item in data['data']:
@@ -275,11 +293,54 @@ def parse_file_content(file, filename):
                         if key in data and isinstance(data[key], str):
                             texts.append(data[key].strip())
                             break
+                            
+        elif file_extension == 'jsonl':
+            # JSON Lines format - each line is a separate JSON object
+            lines = content.strip().split('\n')
+            for line_num, line in enumerate(lines, 1):
+                line = line.strip()
+                if not line:
+                    continue
+                    
+                try:
+                    data = json.loads(line)
+                    
+                    if isinstance(data, str):
+                        texts.append(data.strip())
+                    elif isinstance(data, dict):
+                        # Check for KDPII NER format with entities
+                        if 'text' in data and 'entities' in data:
+                            texts.append(data['text'].strip())
+                            # Extract entity_types from entities array
+                            if isinstance(data['entities'], list):
+                                for entity in data['entities']:
+                                    if isinstance(entity, dict) and 'entity_type' in entity:
+                                        labels.add(entity['entity_type'])
+                        else:
+                            # Look for common text fields
+                            text_found = False
+                            for key in ['text', 'content', 'sentence', 'document', 'message', 'data']:
+                                if key in data and isinstance(data[key], str) and data[key].strip():
+                                    texts.append(data[key].strip())
+                                    text_found = True
+                                    break
+                            
+                            # If no text field found, try to use the whole object as string
+                            if not text_found:
+                                # Look for any string value in the object
+                                for value in data.values():
+                                    if isinstance(value, str) and len(value.strip()) > 5:
+                                        texts.append(value.strip())
+                                        break
+                                    
+                except json.JSONDecodeError as e:
+                    print(f"Warning: Invalid JSON on line {line_num}: {e}")
+                    continue
     
     except Exception as e:
         raise ValueError(f"Error parsing {file_extension} file: {str(e)}")
     
-    return texts
+    return texts, list(labels)
 
 @collab_bp.route('/workspaces/<workspace_id>/upload', methods=['POST'])
 def upload_file(workspace_id):
@@ -298,7 +359,7 @@ def upload_file(workspace_id):
         return jsonify({'error': 'No file selected'}), 400
     
     if not allowed_file(file.filename):
-        return jsonify({'error': 'File type not allowed. Supported: txt, csv, json'}), 400
+        return jsonify({'error': 'File type not allowed. Supported: txt, csv, json, jsonl'}), 400
     
     # Check file size
     file.seek(0, 2)  # Seek to end
@@ -310,7 +371,7 @@ def upload_file(workspace_id):
     
     try:
         # Parse file content
-        texts = parse_file_content(file, file.filename)
+        texts, extracted_labels = parse_file_content(file, file.filename)
         
         if not texts:
             return jsonify({'error': 'No text content found in file'}), 400
@@ -348,7 +409,8 @@ def upload_file(workspace_id):
             'total_texts': len(texts),
             'created_tasks': len(created_tasks),
             'failed_tasks': len(failed_tasks),
-            'task_ids': created_tasks
+            'task_ids': created_tasks,
+            'extracted_labels': extracted_labels
         })
         
     except ValueError as e:
@@ -369,6 +431,7 @@ def batch_upload(workspace_id):
     files = request.files.getlist('files[]')
     results = []
     total_created = 0
+    all_extracted_labels = set()  # 모든 파일에서 추출된 라벨들
     
     for file in files:
         if file.filename == '':
@@ -383,7 +446,9 @@ def batch_upload(workspace_id):
             continue
         
         try:
-            texts = parse_file_content(file, file.filename)
+            texts, extracted_labels = parse_file_content(file, file.filename)
+            # 추출된 라벨들을 전체 세트에 추가
+            all_extracted_labels.update(extracted_labels)
             created_tasks = []
             
             for i, text in enumerate(texts):
@@ -426,5 +491,6 @@ def batch_upload(workspace_id):
         'message': f'Batch upload completed',
         'total_files': len(files),
         'total_created_tasks': total_created,
-        'results': results
+        'results': results,
+        'extracted_labels': list(all_extracted_labels)
     })

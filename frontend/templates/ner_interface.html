@@ -207,19 +207,6 @@
             line-height: 1.4;
         }
         
-        .completion-status {
-            margin-top: 20px;
-            padding: 12px;
-            background: #f8f9fa;
-            border-radius: 4px;
-            border: 1px solid #e8e8e8;
-        }
-        
-        .completion-status h4 {
-            font-size: 13px;
-            color: #555;
-            margin-bottom: 8px;
-        }
         
         .progress-bar {
             height: 20px;
@@ -787,6 +774,250 @@
         .category-select option {
             padding: 8px 12px;
         }
+        
+        /* Upload Modal Styles */
+        .upload-area {
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            padding: 30px 20px;
+            text-align: center;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #fafafa;
+            position: relative;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .upload-area:hover {
+            border-color: #3498db;
+            background: #f0f8ff;
+            transform: translateY(-2px);
+        }
+        
+        .upload-area.dragover {
+            border-color: #2ecc71;
+            background: #e8f5e8;
+            border-style: solid;
+            transform: scale(1.02);
+        }
+        
+        .upload-area.processing {
+            border-color: #f39c12;
+            background: #fef9e7;
+            pointer-events: none;
+        }
+        
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+            transition: transform 0.3s ease;
+        }
+        
+        .upload-area:hover .upload-icon {
+            transform: scale(1.1);
+        }
+        
+        .upload-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+        
+        .upload-subtitle {
+            font-size: 14px;
+            color: #7f8c8d;
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+        
+        .upload-details {
+            background: white;
+            padding: 12px 15px;
+            border-radius: 6px;
+            border: 1px solid #e8e8e8;
+            text-align: left;
+            font-size: 12px;
+            color: #555;
+            max-width: 400px;
+        }
+        
+        .file-preview {
+            margin-top: 15px;
+            max-width: 100%;
+        }
+        
+        .file-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            background: white;
+            border: 1px solid #e8e8e8;
+            border-radius: 4px;
+            margin-bottom: 5px;
+            font-size: 13px;
+        }
+        
+        .file-name {
+            font-weight: 500;
+            color: #2c3e50;
+        }
+        
+        .file-size {
+            color: #7f8c8d;
+            font-size: 11px;
+        }
+        
+        .file-status {
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        
+        /* Tasks Sidebar */
+        .tasks-sidebar {
+            width: 280px;
+            display: flex;
+            flex-direction: column;
+            background: white;
+            border-radius: 3px;
+            box-shadow: 2px 2px 8px #AAA;
+            border: 1px solid #e8e8e8;
+            margin-right: 16px;
+            transition: width 0.3s ease;
+            overflow: hidden;
+        }
+        
+        .tasks-sidebar.collapsed {
+            width: 60px;
+        }
+        
+        .tasks-header {
+            padding: 16px;
+            border-bottom: 1px solid #e8e8e8;
+            background: #f8f9fa;
+            border-radius: 3px 3px 0 0;
+            cursor: pointer;
+            user-select: none;
+            transition: background-color 0.2s ease;
+        }
+        
+        .tasks-header:hover {
+            background: #e9ecef;
+        }
+        
+        .tasks-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: justify-content 0.3s ease;
+        }
+        
+        
+        .tasks-header h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin: 0;
+            white-space: nowrap;
+        }
+        
+        .toggle-icon {
+            font-size: 18px;
+            cursor: pointer;
+            transition: opacity 0.3s ease;
+            min-width: 20px;
+            text-align: center;
+        }
+        
+        .tasks-sidebar.collapsed .tasks-header h3 {
+            opacity: 0;
+            width: 0;
+            overflow: hidden;
+        }
+        
+        .tasks-sidebar.collapsed .toggle-icon {
+            opacity: 1 !important;
+        }
+        
+        .tasks-sidebar.collapsed .tasks-title {
+            justify-content: center;
+            padding: 0 10px;
+        }
+        
+        .tasks-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px;
+            min-height: 200px;
+            max-height: 400px;
+            transition: opacity 0.3s ease;
+        }
+        
+        .tasks-sidebar.collapsed .tasks-list {
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .task-item {
+            padding: 12px;
+            margin-bottom: 6px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            cursor: pointer;
+            border: 1px solid #e9ecef;
+            transition: all 0.2s;
+        }
+        
+        .task-item:hover {
+            background: #e9ecef;
+            border-color: #dee2e6;
+        }
+        
+        .task-item.active {
+            background: #3498db;
+            color: white;
+            border-color: #2980b9;
+        }
+        
+        .task-text {
+            font-size: 13px;
+            line-height: 1.4;
+            margin-bottom: 6px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        .task-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+            opacity: 0.7;
+        }
+        
+        
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 150px;
+            color: #6c757d;
+            font-style: italic;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -797,7 +1028,7 @@
                 <p>Extracted from Label Studio • Select text and click labels to annotate • Use checkboxes to filter labels • Supports overlapping annotations</p>
             </div>
             <div class="header-right">
-                <div class="user-info" id="currentUser">사용자: user_123</div>
+                <div class="user-info" id="currentUser">사용자: {{ member_name or 'Anonymous' }}</div>
                 <div class="user-role">어노테이터</div>
             </div>
         </div>
@@ -805,11 +1036,28 @@
         <div class="controls">
             <textarea class="textarea" id="textInput" placeholder="Enter text to annotate...">John Smith works at Microsoft in Seattle. He previously worked at Google in Mountain View.</textarea>
             <button class="btn primary" onclick="loadText()">Load Text</button>
+            <button class="btn" onclick="showUploadModal()">📁 Upload Files</button>
             <button class="btn" onclick="clearAnnotations()">Clear</button>
             <button class="btn" onclick="exportAnnotations()">Export</button>
         </div>
         
         <div class="annotation-interface">
+            <!-- Tasks Sidebar -->
+            <div class="tasks-sidebar" id="tasksSidebar">
+                <div class="tasks-header" onclick="toggleTasksSidebar()">
+                    <div class="tasks-title">
+                        <h3>Tasks (<span id="totalTasks">0</span>)</h3>
+                        <span class="toggle-icon" id="tasksToggleIcon"><</span>
+                    </div>
+                </div>
+                <div class="tasks-list" id="tasksList">
+                    <div class="empty-state">
+                        <p>📝 No tasks yet</p>
+                        <small>Upload files to create tasks</small>
+                    </div>
+                </div>
+            </div>
+            
             <div class="labels-panel">
                 <h3>Entity Labels</h3>
                 <button class="filter-clear-btn" onclick="clearAllFilters()">Clear All Filters</button>
@@ -882,9 +1130,15 @@
                     </div>
                 </div>
                 
-                <div class="auto-generated">
+                <div class="auto-generated" style="margin-bottom: 16px;">
                     <label>작업자 (annotator):</label>
-                    <input type="text" id="annotator" value="user_123" readonly>
+                    <input type="text" id="annotator" value="{{ member_name or 'Anonymous' }}" readonly style="width: 100%;">
+                </div>
+                
+                <div class="field-group">
+                    <label>메타데이터 (metadata):</label>
+                    <textarea id="metadata" readonly style="background: #f8f9fa; color: #666; border: 1px solid #e8e8e8; padding: 8px; border-radius: 3px; font-size: 12px; resize: vertical; min-height: 80px; font-family: monospace; width: 100%; box-sizing: border-box;" placeholder="메타데이터가 표시됩니다..."></textarea>
+                    <small class="help-text">파일 정보 및 태스크 관련 메타데이터</small>
                 </div>
                 
                 <div style="display: none;">
@@ -906,14 +1160,6 @@
                         resize: vertical;
                         color: #333;
                     " placeholder="어노테이션을 선택하면 JSON 정보가 표시됩니다."></textarea>
-                </div>
-                
-                <div class="completion-status">
-                    <h4>완성도</h4>
-                    <div class="progress-bar">
-                        <div class="progress" id="progressBar" style="width: 0%">0/0</div>
-                    </div>
-                    <small id="progressText">어노테이션을 선택하세요</small>
                 </div>
             </div>
         </div>
@@ -1022,12 +1268,134 @@
         let currentText = '';
         let filteredLabels = new Set(); // 필터링된 라벨들을 저장
         
-        // 사용자 정보 관리
+        // 사용자 정보 관리 (collaborate에서 입력한 이름 사용)
+        const currentAnnotator = '{{ member_name or "Anonymous" }}';
         let currentUser = {
-            loginId: 'user_123',  // 실제로는 세션/토큰에서 가져옴
+            loginId: currentAnnotator,  // collaborate에서 입력한 이름
             name: '어노테이터',
             role: '어노테이터'
         };
+        
+        // 랜덤 색상 생성 함수
+        function getRandomColor() {
+            const colors = [
+                '#e74c3c', '#3498db', '#2ecc71', '#f39c12', '#9b59b6',
+                '#1abc9c', '#e67e22', '#34495e', '#16a085', '#27ae60',
+                '#2980b9', '#8e44ad', '#c0392b', '#d35400', '#7f8c8d'
+            ];
+            return colors[Math.floor(Math.random() * colors.length)];
+        }
+        
+        // 대비 색상 계산 함수
+        function getContrastColor(hexcolor) {
+            const r = parseInt(hexcolor.substr(1,2),16);
+            const g = parseInt(hexcolor.substr(3,2),16);
+            const b = parseInt(hexcolor.substr(5,2),16);
+            const yiq = ((r*299)+(g*587)+(b*114))/1000;
+            return (yiq >= 128) ? 'black' : 'white';
+        }
+        
+        // 라벨 선택 상태 업데이트
+        function updateLabelSelection() {
+            // Remove all selections first
+            document.querySelectorAll('.label-item').forEach(btn => {
+                btn.classList.remove('selected');
+            });
+            
+            // Add selection to current label if it exists
+            if (selectedLabel) {
+                const targetLabel = document.querySelector(`.label-item[data-label="${selectedLabel}"]`);
+                if (targetLabel) {
+                    targetLabel.classList.add('selected');
+                } else {
+                    // 현재 선택된 라벨이 존재하지 않으면 null로 설정
+                    console.warn('Selected label not found, clearing selection:', selectedLabel);
+                    selectedLabel = null;
+                }
+            }
+        }
+        
+        // 어노테이션을 텍스트에 하이라이트로 렌더링
+        function renderAnnotations() {
+            const textContentEl = document.getElementById('textContent');
+            if (!textContentEl || !currentText) {
+                console.warn('renderAnnotations: missing textContentEl or currentText');
+                return;
+            }
+            
+            console.log('Rendering annotations, count:', annotations.length);
+            
+            if (annotations.length === 0) {
+                // 어노테이션이 없으면 순수 텍스트만 표시
+                textContentEl.innerHTML = escapeHtml(currentText);
+                return;
+            }
+            
+            // 어노테이션을 시작 위치 기준으로 정렬
+            const sortedAnnotations = [...annotations].sort((a, b) => a.start - b.start);
+            
+            let html = '';
+            let lastEnd = 0;
+            
+            sortedAnnotations.forEach((annotation, index) => {
+                // 이전 어노테이션 끝부분부터 현재 어노테이션 시작까지의 텍스트
+                if (annotation.start > lastEnd) {
+                    html += escapeHtml(currentText.substring(lastEnd, annotation.start));
+                }
+                
+                // 해당 라벨의 색상 찾기
+                const labelColor = getLabelColor(annotation.labels[0]);
+                
+                // 어노테이션된 텍스트를 하이라이트로 표시
+                const spanId = `annotation-${index}`;
+                html += `<span class="annotation-highlight" 
+                              id="${spanId}"
+                              data-annotation-id="${annotation.id || index}"
+                              data-labels="${annotation.labels.join(',')}"
+                              style="background-color: ${labelColor}; color: white; padding: 1px 3px; border-radius: 3px; cursor: pointer;"
+                              onclick="selectAnnotation('${annotation.id || index}')"
+                              title="${annotation.labels.join(', ')}: ${annotation.text}">
+                         ${escapeHtml(annotation.text)}
+                         </span>`;
+                
+                lastEnd = annotation.end;
+            });
+            
+            // 마지막 어노테이션 이후의 텍스트
+            if (lastEnd < currentText.length) {
+                html += escapeHtml(currentText.substring(lastEnd));
+            }
+            
+            textContentEl.innerHTML = html;
+            console.log('Annotations rendered with highlights');
+        }
+        
+        // 라벨에 해당하는 색상 찾기
+        function getLabelColor(labelValue) {
+            // 현재 태스크의 라벨에서 찾기
+            const taskLabels = window.currentTaskLabels || [];
+            const taskLabel = taskLabels.find(label => label.value === labelValue);
+            
+            if (taskLabel) {
+                return taskLabel.background;
+            }
+            
+            // 찾지 못하면 기본 색상 반환
+            return '#999999';
+        }
+        
+        // HTML 이스케이프 함수
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // 어노테이션 클릭 처리
+        function selectAnnotation(annotationId) {
+            console.log('Annotation clicked:', annotationId);
+            // 향후 어노테이션 편집 기능을 위해 예약
+        }
         
         // 현재 선택된 어노테이션 정보
         let selectedAnnotation = null;
@@ -1045,24 +1413,29 @@
             
             // Select current label
             selectedLabel = labelValue;
-            document.querySelector(`[data-label="${labelValue}"]`).classList.add('selected');
+            const targetLabel = document.querySelector(`.label-item[data-label="${labelValue}"]`);
+            if (targetLabel) {
+                targetLabel.classList.add('selected');
+            } else {
+                console.warn('Label not found:', labelValue);
+            }
         }
         
         // Toggle label filter on/off
         function toggleLabelFilter(labelValue) {
-            const labelButton = document.querySelector(`button[data-label="${labelValue}"]`);
+            const labelButton = document.querySelector(`.label-item[data-label="${labelValue}"]`);
             const checkbox = document.querySelector(`.filter-checkbox[data-label="${labelValue}"]`);
             
             if (filteredLabels.has(labelValue)) {
                 // Remove from filter
                 filteredLabels.delete(labelValue);
-                labelButton.classList.remove('filtered');
-                checkbox.classList.remove('checked');
+                if (labelButton) labelButton.classList.remove('filtered');
+                if (checkbox) checkbox.classList.remove('checked');
             } else {
                 // Add to filter
                 filteredLabels.add(labelValue);
-                labelButton.classList.add('filtered');
-                checkbox.classList.add('checked');
+                if (labelButton) labelButton.classList.add('filtered');
+                if (checkbox) checkbox.classList.add('checked');
             }
             
             // Update annotation visibility
@@ -1317,6 +1690,7 @@
                     
                     renderAnnotations();
                     updateStatistics();
+                    autoSaveTask(); // Auto-save task progress
                 }
             } catch (error) {
                 console.error('Error adding annotation:', error);
@@ -1461,6 +1835,7 @@
                 annotations.splice(index, 1);
                 renderAnnotations();
                 updateStatistics();
+                autoSaveTask(); // Auto-save task progress
             } else {
                 console.warn('Invalid annotation index:', index);
             }
@@ -1475,6 +1850,7 @@
             }
             updateStatistics();
             updateEntityDetailsPanel(); // 패널도 리셋
+            autoSaveTask(); // Auto-save task progress
         }
         
         // Export annotations
@@ -1554,9 +1930,6 @@
                 
                 statsContent.innerHTML = html;
                 statsDiv.style.display = 'block';
-                
-                // 완성도도 함께 업데이트
-                updateCompletionProgress();
                 
             } catch (error) {
                 console.error('Error updating statistics:', error);
@@ -2118,8 +2491,7 @@
                     span_id: annotation.span_id || '',
                     entity_id: annotation.entity_id || '',
                     identifier_type: annotation.identifier_type || 'default',
-                    annotator: annotation.annotator || currentUser.loginId,
-                    relationships: annotation.relationships || []
+                    annotator: annotation.annotator || currentUser.loginId
                 };
                 jsonDisplayTextarea.value = JSON.stringify(jsonData, null, 2);
                 jsonDisplayTextarea.style.border = '';
@@ -2136,40 +2508,6 @@
                 jsonDisplayTextarea.value = '{}';
                 jsonDisplayTextarea.style.border = '';
             }
-            
-            updateCompletionProgress();
-        }
-        
-        // 완성도 업데이트
-        function updateCompletionProgress() {
-            const progressBar = document.getElementById('progressBar');
-            const progressText = document.getElementById('progressText');
-            
-            if (annotations.length === 0) {
-                progressBar.style.width = '0%';
-                progressBar.textContent = '0/0';
-                progressText.textContent = '어노테이션을 선택하세요';
-                return;
-            }
-            
-            let completedCount = 0;
-            annotations.forEach(ann => {
-                if (ann.identifier_type && ann.identifier_type !== '' && ann.annotator) {
-                    completedCount++;
-                }
-            });
-            
-            const percentage = Math.round((completedCount / annotations.length) * 100);
-            progressBar.style.width = percentage + '%';
-            progressBar.textContent = `${completedCount}/${annotations.length}`;
-            
-            if (completedCount === annotations.length) {
-                progressText.textContent = '모든 어노테이션 완성됨';
-                progressText.style.color = '#28a745';
-            } else {
-                progressText.textContent = `${annotations.length - completedCount}개 미완성`;
-                progressText.style.color = '#dc3545';
-            }
         }
         
         // 이벤트 핸들러 등록
@@ -2179,7 +2517,6 @@
             identifierTypeSelect.addEventListener('change', function() {
                 if (selectedAnnotation) {
                     selectedAnnotation.identifier_type = this.value;
-                    updateCompletionProgress();
                     
                     // JSON 실시간 업데이트를 위해 패널 다시 업데이트
                     updateEntityDetailsPanel(selectedAnnotation);
@@ -2235,7 +2572,6 @@
                 
                 // 어노테이션 재렌더링
                 renderAnnotations();
-                updateCompletionProgress();
                 
                 // 성공 피드백
                 showJSONFeedback('success', 'JSON이 성공적으로 적용되었습니다.');
@@ -2380,7 +2716,6 @@
                 selectedAnnotation.entity_id = parsedData.entity_id || '';
                 selectedAnnotation.identifier_type = parsedData.identifier_type || 'default';
                 selectedAnnotation.annotator = parsedData.annotator || currentUser.loginId;
-                selectedAnnotation.relationships = parsedData.relationships || [];
                 
                 // UI 필드들 업데이트
                 updateUIFromAnnotation(selectedAnnotation);
@@ -2449,6 +2784,774 @@
                 });
             }
         });
+        
+        // File Upload Functions
+        function showUploadModal() {
+            document.getElementById('uploadModal').style.display = 'flex';
+        }
+        
+        function hideUploadModal() {
+            document.getElementById('uploadModal').style.display = 'none';
+        }
+        
+        function setupFileUpload() {
+            const uploadArea = document.getElementById('uploadArea');
+            const fileInput = document.getElementById('fileInput');
+            const filePreview = document.getElementById('filePreview');
+            
+            // Drag and drop events
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                uploadArea.classList.add('dragover');
+            });
+            
+            uploadArea.addEventListener('dragenter', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                uploadArea.classList.add('dragover');
+            });
+            
+            uploadArea.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (!uploadArea.contains(e.relatedTarget)) {
+                    uploadArea.classList.remove('dragover');
+                }
+            });
+            
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                uploadArea.classList.remove('dragover');
+                
+                const files = Array.from(e.dataTransfer.files);
+                handleFileSelection(files);
+            });
+            
+            // File input change
+            fileInput.addEventListener('change', (e) => {
+                const files = Array.from(e.target.files);
+                handleFileSelection(files);
+            });
+        }
+        
+        function handleFileSelection(files) {
+            const filePreview = document.getElementById('filePreview');
+            const supportedTypes = ['txt', 'json', 'jsonl', 'csv'];
+            const maxSize = 16 * 1024 * 1024; // 16MB
+            
+            if (files.length === 0) return;
+            
+            let validFiles = [];
+            let previewHTML = '';
+            
+            files.forEach(file => {
+                const extension = file.name.split('.').pop().toLowerCase();
+                const isSupported = supportedTypes.includes(extension);
+                const isValidSize = file.size <= maxSize;
+                
+                let status = 'ready';
+                let statusText = 'Ready';
+                
+                if (!isSupported) {
+                    status = 'error';
+                    statusText = 'Unsupported';
+                } else if (!isValidSize) {
+                    status = 'error';
+                    statusText = 'Too large';
+                } else {
+                    validFiles.push(file);
+                }
+                
+                previewHTML += `
+                    <div class="file-item">
+                        <div>
+                            <div class="file-name">${file.name}</div>
+                            <div class="file-size">${formatFileSize(file.size)} • ${extension.toUpperCase()}</div>
+                        </div>
+                        <div class="file-status ${status}">${statusText}</div>
+                    </div>
+                `;
+            });
+            
+            filePreview.innerHTML = previewHTML;
+            filePreview.style.display = 'block';
+            
+            // Update file input with valid files only
+            const dt = new DataTransfer();
+            validFiles.forEach(file => dt.items.add(file));
+            document.getElementById('fileInput').files = dt.files;
+        }
+        
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+        }
+        
+        async function uploadFiles() {
+            const fileInput = document.getElementById('fileInput');
+            const files = fileInput.files;
+            const uploadArea = document.getElementById('uploadArea');
+            
+            if (files.length === 0) {
+                alert('Please select files first');
+                return;
+            }
+            
+            // Show processing state
+            uploadArea.classList.add('processing');
+            const uploadTitle = uploadArea.querySelector('.upload-title');
+            const originalTitle = uploadTitle.textContent;
+            uploadTitle.textContent = 'Processing files...';
+            
+            const formData = new FormData();
+            for (let file of files) {
+                formData.append('files[]', file);
+            }
+            
+            try {
+                // Use workspace upload if available, otherwise create tasks directly
+                const workspaceId = '{{ workspace_id }}';
+                let uploadUrl = `/collab/workspaces/${workspaceId}/upload/batch`;
+                
+                // If no workspace_id, fallback to basic task creation
+                if (!workspaceId || workspaceId === 'None') {
+                    // Parse files and create tasks locally
+                    await processFilesLocally(files);
+                    hideUploadModal();
+                    resetUploadArea();
+                    return;
+                }
+                
+                const response = await fetch(uploadUrl, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                console.log('Upload response:', result); // 디버깅용
+                
+                if (response.ok) {
+                    // 라벨은 각 task가 가지고 있으므로 전역 생성하지 않음
+                    // 서버 응답의 extracted_labels는 무시하고 task별 라벨 사용
+                    
+                    // Also create local tasks for UI management
+                    let allTasks = [];
+                    for (let file of files) {
+                        try {
+                            const text = await file.text();
+                            const result = parseFileContent(text, file.name);
+                            const texts = result.texts;
+                            const annotations = result.annotations;
+                            const textLabels = result.textLabels;
+                            const textMetadata = result.textMetadata;
+                            
+                            texts.forEach((textContent, index) => {
+                                allTasks.push({
+                                    id: `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                                    text: textContent,
+                                    filename: file.name,
+                                    index: index + 1,
+                                    annotations: annotations[index] || [],
+                                    labels: textLabels[index] || [],  // 이 task의 라벨들
+                                    metadata: textMetadata[index] // 원본 파일의 메타데이터 사용
+                                });
+                            });
+                        } catch (error) {
+                            console.error(`Error processing ${file.name}:`, error);
+                        }
+                    }
+                    
+                    // Add to global tasks and update UI
+                    if (allTasks.length > 0) {
+                        window.uploadedTasks = (window.uploadedTasks || []).concat(allTasks);
+                        updateTasksList();
+                        selectTask(allTasks[0].id);
+                    }
+                    
+                    let message = `✅ Upload Completed!\n\n`;
+                    message += `📁 Files processed: ${result.total_files}\n`;
+                    message += `📝 Tasks created: ${result.total_created_tasks}\n`;
+                    message += `📝 First text loaded for annotation\n\n`;
+                    
+                    if (result.results) {
+                        message += `File Details:\n`;
+                        result.results.forEach(fileResult => {
+                            if (fileResult.status === 'success') {
+                                message += `• ${fileResult.filename}: ${fileResult.created_tasks} tasks\n`;
+                            } else {
+                                message += `• ${fileResult.filename}: ❌ ${fileResult.message}\n`;
+                            }
+                        });
+                    }
+                    
+                    alert(message);
+                    hideUploadModal();
+                    resetUploadArea();
+                } else {
+                    alert('Upload failed: ' + result.error);
+                }
+            } catch (error) {
+                console.error('Upload failed:', error);
+                alert('Network error during upload. Please try again.');
+            } finally {
+                uploadArea.classList.remove('processing');
+                uploadTitle.textContent = originalTitle;
+            }
+        }
+        
+        async function processFilesLocally(files) {
+            let allTasks = [];
+            let allLabels = new Set();
+            
+            for (let file of files) {
+                try {
+                    const text = await file.text();
+                    const result = parseFileContent(text, file.name);
+                    const texts = result.texts;
+                    const labels = result.labels;
+                    const annotations = result.annotations;
+                    const textLabels = result.textLabels;
+                    
+                    // Collect all labels (전체 파일 업로드 통계용)
+                    labels.forEach(label => allLabels.add(label));
+                    
+                    // Create tasks for each text
+                    texts.forEach((textContent, index) => {
+                        allTasks.push({
+                            id: `task_${Date.now()}_${index}`,
+                            text: textContent,
+                            filename: file.name,
+                            index: index + 1,
+                            annotations: annotations[index] || [],
+                            labels: textLabels[index] || []  // 이 task의 라벨들
+                        });
+                    });
+                } catch (error) {
+                    console.error(`Error processing ${file.name}:`, error);
+                }
+            }
+            
+            // 라벨은 각 task가 가지고 있으므로 전역 생성하지 않음
+            // 대신 첫 번째 task의 라벨을 표시할 예정
+            
+            // Add tasks to global tasks array and update UI
+            if (allTasks.length > 0) {
+                window.uploadedTasks = (window.uploadedTasks || []).concat(allTasks);
+                updateTasksList();
+                
+                // Load first task automatically
+                selectTask(allTasks[0].id);
+                
+                const labelInfo = allLabels.size > 0 ? `\n🏷️ ${allLabels.size} labels auto-created` : '';
+                alert(`✅ Files processed!\n📝 ${allTasks.length} tasks created${labelInfo}\nFirst task loaded for annotation.`);
+            }
+        }
+        
+        function parseFileContent(content, filename) {
+            const extension = filename.split('.').pop().toLowerCase();
+            const texts = [];
+            const labels = new Set();  // 추출된 entity_type들을 저장 (전체)
+            const textAnnotations = [];  // 각 텍스트에 대한 annotation 정보
+            const textLabels = [];  // 각 텍스트별 라벨 저장
+            const textMetadata = [];  // 각 텍스트별 원본 메타데이터 저장
+            
+            try {
+                if (extension === 'txt') {
+                    const lines = content.trim().split('\n');
+                    const validLines = lines.filter(line => line.trim());
+                    texts.push(...validLines);
+                    // TXT 파일은 annotation과 라벨 없음
+                    validLines.forEach(() => {
+                        textAnnotations.push([]);
+                        textLabels.push([]); // 빈 라벨 배열
+                        textMetadata.push(null); // TXT 파일에는 메타데이터 없음
+                    });
+                } else if (extension === 'json') {
+                    const data = JSON.parse(content);
+                    // 단일 객체를 배열로 변환
+                    const dataArray = Array.isArray(data) ? data : [data];
+                    dataArray.forEach(item => {
+                            if (typeof item === 'string') {
+                                texts.push(item.trim());
+                                textAnnotations.push([]); // 빈 annotation
+                                textLabels.push([]); // 빈 라벨 배열
+                            } else if (typeof item === 'object') {
+                                // Check for KDPII NER format with entities
+                                if ('text' in item && 'entities' in item) {
+                                    texts.push(item.text.trim());
+                                    
+                                    // 원본 메타데이터 추출 (text, entities 제외한 나머지 필드들)
+                                    const metadata = {};
+                                    Object.keys(item).forEach(key => {
+                                        if (key !== 'text' && key !== 'entities') {
+                                            metadata[key] = item[key];
+                                        }
+                                    });
+                                    
+                                    // Process entities and convert to annotation format
+                                    const annotations = [];
+                                    const itemLabels = new Map(); // 이 텍스트의 라벨들 (이름 -> 색상 매핑)
+                                    if (Array.isArray(item.entities)) {
+                                        item.entities.forEach((entity, index) => {
+                                            if (entity && typeof entity === 'object' && entity.entity_type) {
+                                                labels.add(entity.entity_type); // 전체 라벨 세트에 추가
+                                                
+                                                // 이 텍스트에서 처음 보는 라벨이면 색상 할당
+                                                if (!itemLabels.has(entity.entity_type)) {
+                                                    itemLabels.set(entity.entity_type, getRandomColor());
+                                                }
+                                                
+                                                // Convert to internal annotation format
+                                                annotations.push({
+                                                    start: entity.start_offset,
+                                                    end: entity.end_offset,
+                                                    text: entity.span_text,
+                                                    labels: [entity.entity_type],
+                                                    annotator: entity.annotator || currentAnnotator,
+                                                    identifier_type: entity.identifier_type || 'default',
+                                                    span_id: entity.span_id || (index + 1),
+                                                    entity_id: entity.entity_id || (index + 1)
+                                                });
+                                            }
+                                        });
+                                    }
+                                    textAnnotations.push(annotations);
+                                    // Map을 객체 배열로 변환
+                                    const labelArray = Array.from(itemLabels.entries()).map(([name, color]) => ({
+                                        name: name,
+                                        color: color
+                                    }));
+                                    textLabels.push(labelArray);
+                                    textMetadata.push(Object.keys(metadata).length > 0 ? metadata : null);
+                                } else {
+                                    for (const key of ['text', 'content', 'sentence', 'document', 'message']) {
+                                        if (key in item && typeof item[key] === 'string') {
+                                            texts.push(item[key].trim());
+                                            textAnnotations.push([]); // 빈 annotation
+                                            textLabels.push([]); // 빈 라벨 배열
+                                            textMetadata.push(null); // 메타데이터 없음
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                    });
+                } else if (extension === 'jsonl') {
+                    const lines = content.trim().split('\n');
+                    lines.forEach(line => {
+                        if (line.trim()) {
+                            try {
+                                const data = JSON.parse(line);
+                                if (typeof data === 'string') {
+                                    texts.push(data.trim());
+                                    textAnnotations.push([]); // 빈 annotation
+                                    textLabels.push([]); // 빈 라벨 배열
+                                    textMetadata.push(null); // 메타데이터 없음
+                                } else if (typeof data === 'object') {
+                                    // Check for KDPII NER format with entities
+                                    if ('text' in data && 'entities' in data) {
+                                        texts.push(data.text.trim());
+                                        
+                                        // 원본 메타데이터 추출 (text, entities 제외한 나머지 필드들)
+                                        const metadata = {};
+                                        Object.keys(data).forEach(key => {
+                                            if (key !== 'text' && key !== 'entities') {
+                                                metadata[key] = data[key];
+                                            }
+                                        });
+                                        
+                                        // Process entities and convert to annotation format
+                                        const annotations = [];
+                                        const itemLabels = new Map(); // 이 텍스트의 라벨들과 색상
+                                        if (Array.isArray(data.entities)) {
+                                            data.entities.forEach((entity, index) => {
+                                                if (entity && typeof entity === 'object' && entity.entity_type) {
+                                                    labels.add(entity.entity_type); // 전체 라벨 세트에 추가
+                                                    
+                                                    // 이 텍스트에서 처음 보는 라벨이면 색상 할당
+                                                    if (!itemLabels.has(entity.entity_type)) {
+                                                        itemLabels.set(entity.entity_type, getRandomColor());
+                                                    }
+                                                    
+                                                    // Convert to internal annotation format
+                                                    annotations.push({
+                                                        start: entity.start_offset,
+                                                        end: entity.end_offset,
+                                                        text: entity.span_text,
+                                                        labels: [entity.entity_type],
+                                                        annotator: entity.annotator || currentAnnotator,
+                                                        identifier_type: entity.identifier_type || 'default',
+                                                        span_id: entity.span_id || (index + 1),
+                                                        entity_id: entity.entity_id || (index + 1)
+                                                    });
+                                                }
+                                            });
+                                        }
+                                        textAnnotations.push(annotations);
+                                        // Map을 {name, color} 객체 배열로 변환
+                                        const labelArray = Array.from(itemLabels.entries()).map(([name, color]) => ({
+                                            name: name,
+                                            color: color
+                                        }));
+                                        textLabels.push(labelArray);
+                                        textMetadata.push(Object.keys(metadata).length > 0 ? metadata : null);
+                                    } else {
+                                        for (const key of ['text', 'content', 'sentence', 'document', 'message', 'data']) {
+                                            if (key in data && typeof data[key] === 'string') {
+                                                texts.push(data[key].trim());
+                                                textAnnotations.push([]); // 빈 annotation
+                                                textLabels.push([]); // 빈 라벨 배열
+                                                textMetadata.push(null); // 메타데이터 없음
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+                            } catch (e) {
+                                console.warn('Invalid JSON line:', line);
+                            }
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Error parsing file:', error);
+            }
+            
+            const filteredTexts = [];
+            const filteredAnnotations = [];
+            const filteredLabels = [];
+            const filteredMetadata = [];
+            
+            // 필터링된 텍스트와 해당 annotation, 라벨, 메타데이터를 매칭
+            texts.forEach((text, index) => {
+                if (text && text.length > 5) {
+                    filteredTexts.push(text);
+                    filteredAnnotations.push(textAnnotations[index] || []);
+                    filteredLabels.push(Array.from(textLabels[index] || new Set()));
+                    filteredMetadata.push(textMetadata[index] || null);
+                }
+            });
+            
+            return {
+                texts: filteredTexts,
+                labels: Array.from(labels),
+                annotations: filteredAnnotations,
+                textLabels: filteredLabels,
+                textMetadata: filteredMetadata
+            };
+        }
+        
+        function resetUploadArea() {
+            const fileInput = document.getElementById('fileInput');
+            const filePreview = document.getElementById('filePreview');
+            
+            fileInput.value = '';
+            filePreview.innerHTML = '';
+            filePreview.style.display = 'none';
+        }
+        
+        // Task management functions
+        let currentTask = null;
+        
+        function updateTasksList() {
+            const tasksList = document.getElementById('tasksList');
+            const totalTasks = document.getElementById('totalTasks');
+            const tasks = window.uploadedTasks || [];
+            
+            totalTasks.textContent = tasks.length;
+            
+            if (tasks.length === 0) {
+                tasksList.innerHTML = '<div class="empty-state"><p>📝 No tasks yet</p><small>Upload files to create tasks</small></div>';
+                return;
+            }
+            
+            tasksList.innerHTML = tasks.map((task, index) => `
+                <div class="task-item" onclick="selectTask('${task.id}')" data-task-id="${task.id}">
+                    <div class="task-text">${task.text.length > 80 ? task.text.substring(0, 80) + '...' : task.text}</div>
+                    <div class="task-meta">
+                        <span>${task.filename} (${task.index})</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function selectTask(taskId) {
+            const tasks = window.uploadedTasks || [];
+            const task = tasks.find(t => t.id === taskId);
+            
+            if (!task) return;
+            
+            // Update UI
+            document.querySelectorAll('.task-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            document.querySelector(`[data-task-id="${taskId}"]`).classList.add('active');
+            
+            // Load task text
+            currentTask = task;
+            currentText = task.text; // 직접 설정
+            document.getElementById('textInput').value = task.text;
+            // loadText() 호출하지 않음 - API 호출 불필요
+            
+            // Update metadata field
+            const metadataField = document.getElementById('metadata');
+            if (metadataField && task.metadata) {
+                const metadataText = JSON.stringify(task.metadata, null, 2);
+                metadataField.value = metadataText;
+            } else if (metadataField) {
+                metadataField.value = '메타데이터 없음';
+            }
+            
+            // 태스크별 라벨 로드 - 완전히 독립적으로 관리
+            const labelContainer = document.querySelector('.labels-panel');
+            console.log('selectTask - task:', task);
+            console.log('selectTask - task.labels:', task.labels);
+            console.log('selectTask - Array.isArray(task.labels):', Array.isArray(task.labels));
+            console.log('selectTask - labelContainer found:', !!labelContainer);
+            
+            if (labelContainer) {
+                // 기존 라벨 버튼들만 제거 (제목과 다른 요소는 유지)
+                const existingLabels = labelContainer.querySelectorAll('.label-item');
+                existingLabels.forEach(label => label.remove());
+                
+                // 태스크 전용 임시 라벨 배열 생성 (전역 labels 배열을 수정하지 않음)
+                const taskLabels = [];
+                
+                // 해당 태스크의 라벨만 로드
+                if (task.labels && Array.isArray(task.labels)) {
+                    console.log('selectTask - 라벨 로드 시작, task.labels.length:', task.labels.length);
+                    task.labels.forEach(labelItem => {
+                        // 태스크 전용 라벨 생성 - 저장된 색상 사용
+                        const taskLabel = {
+                            value: typeof labelItem === 'string' ? labelItem : labelItem.name,
+                            background: typeof labelItem === 'string' ? getRandomColor() : labelItem.color,
+                            hotkey: null
+                        };
+                        taskLabels.push(taskLabel);
+                        
+                        // 라벨 버튼 생성 (기존 템플릿과 동일한 구조)
+                        const labelBtn = document.createElement('button');
+                        labelBtn.className = 'label-item';
+                        labelBtn.style.backgroundColor = taskLabel.background;
+                        labelBtn.style.color = 'white';
+                        labelBtn.setAttribute('data-label', taskLabel.value);
+                        labelBtn.setAttribute('data-label-id', taskLabel.value);
+                        labelBtn.onclick = () => selectLabel(taskLabel.value);
+                        labelBtn.title = 'Click to select, Double-click to edit';
+                        
+                        const labelContent = document.createElement('div');
+                        labelContent.className = 'label-content';
+                        
+                        const labelText = document.createElement('span');
+                        labelText.className = 'label-text';
+                        labelText.textContent = taskLabel.value;
+                        labelContent.appendChild(labelText);
+                        
+                        if (taskLabel.hotkey) {
+                            const hotkeySpan = document.createElement('span');
+                            hotkeySpan.className = 'hotkey';
+                            hotkeySpan.textContent = taskLabel.hotkey;
+                            labelContent.appendChild(hotkeySpan);
+                        }
+                        
+                        const filterControls = document.createElement('div');
+                        filterControls.className = 'filter-controls';
+                        
+                        const filterCheckbox = document.createElement('div');
+                        filterCheckbox.className = 'filter-checkbox';
+                        filterCheckbox.setAttribute('data-label', taskLabel.value);
+                        filterCheckbox.onclick = (e) => {
+                            e.stopPropagation();
+                            toggleLabelFilter(taskLabel.value);
+                        };
+                        filterCheckbox.title = 'Toggle filter for this label';
+                        filterControls.appendChild(filterCheckbox);
+                        
+                        labelBtn.appendChild(labelContent);
+                        labelBtn.appendChild(filterControls);
+                        
+                        labelContainer.appendChild(labelBtn);
+                        
+                        console.log('라벨 버튼 생성됨:', taskLabel.value);
+                    });
+                    
+                    // 현재 태스크의 라벨을 전역 변수에 임시 저장 (어노테이션 기능을 위해)
+                    window.currentTaskLabels = taskLabels;
+                    
+                    // 첫 번째 라벨을 기본 선택
+                    if (task.labels.length > 0) {
+                        selectedLabel = task.labels[0];
+                        console.log('First label selected:', selectedLabel);
+                        updateLabelSelection();
+                    } else {
+                        selectedLabel = null;
+                        console.log('No labels available for this task');
+                    }
+                } else {
+                    // 라벨이 없는 태스크의 경우
+                    window.currentTaskLabels = [];
+                    selectedLabel = null;
+                }
+            }
+            
+            // Load existing annotations for this task
+            annotations = task.annotations || [];
+            console.log('Loaded annotations:', annotations);
+            
+            // 기존 어노테이션을 하이라이트와 함께 렌더링
+            renderAnnotations();
+            updateStatistics();
+        }
+        
+        function saveCurrentTaskAnnotations() {
+            if (!currentTask) return;
+            
+            const tasks = window.uploadedTasks || [];
+            const taskIndex = tasks.findIndex(t => t.id === currentTask.id);
+            
+            if (taskIndex !== -1) {
+                tasks[taskIndex].annotations = [...annotations];
+                updateTasksList();
+                
+                // Maintain active state
+                setTimeout(() => {
+                    document.querySelector(`[data-task-id="${currentTask.id}"]`)?.classList.add('active');
+                }, 100);
+            }
+        }
+        
+        // Override existing functions to save task progress
+        const originalAddAnnotation = window.addAnnotation;
+        const originalRemoveAnnotation = window.removeAnnotation;
+        const originalClearAnnotations = window.clearAnnotations;
+        
+        // Save task progress when annotations change
+        function autoSaveTask() {
+            if (currentTask) {
+                saveCurrentTaskAnnotations();
+            }
+        }
+        
+        // Auto-create labels from extracted entity types
+        async function createLabelsFromExtractedTypes(entityTypes) {
+            console.log('createLabelsFromExtractedTypes called with:', entityTypes); // 디버깅용
+            const colors = [
+                '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7',
+                '#DDA0DD', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E9',
+                '#F8C471', '#82E0AA', '#F1948A', '#85C1E9', '#D7BDE2'
+            ];
+            
+            for (let i = 0; i < entityTypes.length; i++) {
+                const entityType = entityTypes[i];
+                const color = colors[i % colors.length];
+                
+                try {
+                    const response = await fetch('/api/tags', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            value: entityType,
+                            background: color,
+                            category: 'auto-generated',
+                            description: `Auto-generated from uploaded file`
+                        })
+                    });
+                    
+                    if (response.ok) {
+                        console.log(`Auto-created label: ${entityType}`);
+                    } else {
+                        // Label might already exist, that's okay
+                        console.log(`Label ${entityType} already exists or failed to create`);
+                    }
+                } catch (error) {
+                    console.error(`Error creating label ${entityType}:`, error);
+                }
+            }
+            
+            // Refresh the page to show new labels
+            if (entityTypes.length > 0) {
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            }
+        }
+        
+        // Tasks sidebar toggle functionality
+        function toggleTasksSidebar() {
+            const sidebar = document.getElementById('tasksSidebar');
+            const icon = document.getElementById('tasksToggleIcon');
+            
+            sidebar.classList.toggle('collapsed');
+            
+            // Update icon
+            if (sidebar.classList.contains('collapsed')) {
+                icon.textContent = '>';
+                localStorage.setItem('tasksSidebarCollapsed', 'true');
+            } else {
+                icon.textContent = '<';
+                localStorage.setItem('tasksSidebarCollapsed', 'false');
+            }
+        }
+        
+        // Restore sidebar state from localStorage
+        function restoreTasksSidebarState() {
+            const isCollapsed = localStorage.getItem('tasksSidebarCollapsed') === 'true';
+            const sidebar = document.getElementById('tasksSidebar');
+            const icon = document.getElementById('tasksToggleIcon');
+            
+            if (isCollapsed) {
+                sidebar.classList.add('collapsed');
+                icon.textContent = '>';
+            } else {
+                sidebar.classList.remove('collapsed');
+                icon.textContent = '<';
+            }
+        }
+        
+        // Initialize file upload on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            setupFileUpload();
+            
+            // Initialize empty tasks
+            window.uploadedTasks = [];
+            updateTasksList();
+            
+            // Restore sidebar state
+            restoreTasksSidebarState();
+        });
     </script>
+    
+    <!-- File Upload Modal -->
+    <div id="uploadModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+        <div style="background: white; padding: 30px; border-radius: 8px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto;">
+            <h2 style="margin-bottom: 20px; color: #2c3e50;">Upload Text Files</h2>
+            
+            <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
+                <div class="upload-icon">📁</div>
+                <p class="upload-title">Drop files here or click to browse</p>
+                <p class="upload-subtitle">Supported formats: TXT, JSON, JSONL, CSV</p>
+                <div class="upload-details">
+                    <small>• TXT: Plain text files (line-by-line)</small><br>
+                    <small>• JSON: Array of strings or objects with text field</small><br>
+                    <small>• JSONL: JSON Lines (one JSON object per line)</small><br>
+                    <small>• CSV: First column or text column</small><br>
+                    <small style="color: #666;">Maximum file size: 16MB per file</small>
+                </div>
+                <div class="file-preview" id="filePreview" style="display: none;"></div>
+            </div>
+            
+            <input type="file" id="fileInput" style="display: none;" multiple accept=".txt,.csv,.json,.jsonl">
+            
+            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+                <button class="btn" onclick="hideUploadModal()">Cancel</button>
+                <button class="btn primary" onclick="uploadFiles()">Upload</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
