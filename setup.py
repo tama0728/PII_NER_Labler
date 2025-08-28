@@ -50,11 +50,12 @@ setup(
     },
     entry_points={
         "console_scripts": [
-            "ner-labeler=ner_web_interface:main",
+            "kdpii-labeler=app:main",
+            "ner-labeler=ner_web_interface:main",  # 원본 유지
         ],
     },
     include_package_data=True,
     package_data={
-        "": ["templates/*.html", "static/*"],
+        "": ["frontend/templates/*.html", "frontend/static/*"],
     },
 )

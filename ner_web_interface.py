@@ -208,7 +208,7 @@ def main():
     print(f"Available at: http://localhost:{port}")
     
     try:
-        port = 8080
+        port = 8081
         print(f"Attempting to start on port {port}")
         app.run(debug=True, host='0.0.0.0', port=port, threaded=True)
     except Exception as e:

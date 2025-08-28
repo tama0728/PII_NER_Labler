@@ -156,3 +156,13 @@ tmp/
 static/temp/
 uploads/
 downloads/
+
+# Claude Code and Serena configurations
+.claude/
+.serena/
+
+# Temporary files and cookies
+cookies.txt
+
+# Workspace data (user generated)
+workspace_data/

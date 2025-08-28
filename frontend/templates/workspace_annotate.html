@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workspace NER Annotation - Team Collaboration</title>
+    <style>
+        * { 
+            box-sizing: border-box; 
+            margin: 0; 
+            padding: 0; 
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
+            background: #f1f1f1;
+            color: #333;
+            font-size: 14px;
+            line-height: 1.4;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            background: white;
+            border-bottom: 1px solid #e0e0e0;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .workspace-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .workspace-name {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .member-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 15px;
+            background: #f0f0f0;
+            border-radius: 20px;
+        }
+        
+        .main-content {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+        
+        .sidebar {
+            width: 300px;
+            background: white;
+            border-right: 1px solid #e0e0e0;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .task-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+        
+        .task-item {
+            padding: 15px;
+            margin-bottom: 10px;
+            background: #f8f8f8;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+        
+        .task-item:hover {
+            background: #e8e8e8;
+        }
+        
+        .task-item.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .task-status {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            margin-top: 5px;
+        }
+        
+        .status-pending {
+            background: #ffd93d;
+            color: #333;
+        }
+        
+        .status-in-progress {
+            background: #6bcf7f;
+            color: white;
+        }
+        
+        .status-completed {
+            background: #4a90e2;
+            color: white;
+        }
+        
+        .annotation-area {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+        
+        .text-container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            min-height: 300px;
+            line-height: 2;
+            font-size: 16px;
+        }
+        
+        .label-toolbar {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .label-btn {
+            padding: 8px 16px;
+            border: 2px solid;
+            border-radius: 6px;
+            background: white;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .label-btn.active {
+            color: white;
+            transform: scale(1.05);
+        }
+        
+        .entity {
+            padding: 2px 6px;
+            border-radius: 4px;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .entity:hover::after {
+            content: attr(data-label);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            z-index: 100;
+        }
+        
+        .action-buttons {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: opacity 0.3s ease;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #333;
+        }
+        
+        .add-task-form {
+            padding: 20px;
+            border-top: 1px solid #e0e0e0;
+        }
+        
+        .merge-section {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 20px;
+        }
+        
+        .merge-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .annotator-badge {
+            display: inline-block;
+            padding: 2px 6px;
+            background: #f0f0f0;
+            border-radius: 3px;
+            font-size: 11px;
+            margin-left: 5px;
+        }
+        
+        .confidence-badge {
+            display: inline-block;
+            padding: 2px 6px;
+            background: #4CAF50;
+            color: white;
+            border-radius: 3px;
+            font-size: 11px;
+            margin-left: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="workspace-info">
+            <div class="workspace-name" id="workspaceName">Loading...</div>
+            <div class="member-info">
+                <span>👤</span>
+                <span id="memberName">Anonymous</span>
+            </div>
+        </div>
+        <div>
+            <button class="btn btn-secondary" onclick="exportWorkspace()">📥 Export</button>
+            <button class="btn btn-secondary" onclick="window.location.href='/collaborate'">🔙 Back</button>
+        </div>
+    </div>
+    
+    <div class="main-content">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h3>Tasks</h3>
+                <div style="margin-top: 10px; font-size: 12px; color: #666;">
+                    Total: <span id="totalTasks">0</span>
+                </div>
+            </div>
+            
+            <div class="task-list" id="taskList">
+                <!-- Tasks will be loaded here -->
+            </div>
+            
+            <div class="add-task-form">
+                <input type="text" id="newTaskText" placeholder="Enter text to annotate..." style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 10px;">
+                <button class="btn btn-primary" onclick="addTask()" style="width: 100%;">Add Task</button>
+            </div>
+        </div>
+        
+        <div class="annotation-area">
+            <div class="label-toolbar" id="labelToolbar">
+                <!-- Labels will be loaded here -->
+            </div>
+            
+            <div class="text-container" id="textContainer">
+                <p style="color: #999; text-align: center;">Select a task from the sidebar to start annotating</p>
+            </div>
+            
+            <div class="action-buttons">
+                <button class="btn btn-primary" onclick="saveAnnotations()">💾 Save Annotations</button>
+                <button class="btn btn-secondary" onclick="clearAnnotations()">🗑️ Clear</button>
+            </div>
+            
+            <div class="merge-section">
+                <h3>Team Annotations</h3>
+                <div class="merge-controls">
+                    <label>Merge Strategy:</label>
+                    <select id="mergeStrategy" onchange="loadMergedAnnotations()">
+                        <option value="union">Union (All annotations)</option>
+                        <option value="intersection">Intersection (All agree)</option>
+                        <option value="majority">Majority (>50% agree)</option>
+                    </select>
+                    <button class="btn btn-secondary" onclick="loadMergedAnnotations()">🔄 Refresh</button>
+                </div>
+                <div id="mergedAnnotations" style="padding: 10px; background: #f8f8f8; border-radius: 6px; min-height: 100px;">
+                    <!-- Merged annotations will appear here -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const workspaceId = '{{ workspace_id }}';
+        let currentTask = null;
+        let selectedLabel = null;
+        let workspaceData = null;
+        let annotations = [];
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadWorkspace();
+            await loadTasks();
+        });
+        
+        async function loadWorkspace() {
+            try {
+                const response = await fetch(`/collab/workspaces/${workspaceId}`);
+                workspaceData = await response.json();
+                
+                document.getElementById('workspaceName').textContent = workspaceData.name;
+                
+                // Load labels
+                const labelToolbar = document.getElementById('labelToolbar');
+                labelToolbar.innerHTML = workspaceData.labels.map(label => `
+                    <button class="label-btn" 
+                            style="border-color: ${label.color};" 
+                            onclick="selectLabel('${label.name}', '${label.color}')"
+                            data-label="${label.name}"
+                            data-color="${label.color}">
+                        ${label.name}
+                    </button>
+                `).join('');
+                
+                // Get member name from session
+                const memberName = sessionStorage.getItem('memberName') || 'Anonymous';
+                document.getElementById('memberName').textContent = memberName;
+            } catch (error) {
+                console.error('Failed to load workspace:', error);
+            }
+        }
+        
+        async function loadTasks() {
+            try {
+                const response = await fetch(`/collab/workspaces/${workspaceId}/tasks`);
+                const tasks = await response.json();
+                
+                document.getElementById('totalTasks').textContent = tasks.length;
+                
+                const taskList = document.getElementById('taskList');
+                taskList.innerHTML = tasks.map(task => `
+                    <div class="task-item" onclick="selectTask('${task.id}')" data-task-id="${task.id}">
+                        <div style="font-weight: 500;">${task.text.substring(0, 50)}${task.text.length > 50 ? '...' : ''}</div>
+                        <span class="task-status status-${task.status}">${task.status}</span>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Failed to load tasks:', error);
+            }
+        }
+        
+        async function selectTask(taskId) {
+            // Update UI
+            document.querySelectorAll('.task-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            document.querySelector(`[data-task-id="${taskId}"]`).classList.add('active');
+            
+            // Load task
+            try {
+                const response = await fetch(`/collab/workspaces/${workspaceId}/tasks/${taskId}`);
+                currentTask = await response.json();
+                
+                // Display text
+                document.getElementById('textContainer').textContent = currentTask.text;
+                
+                // Load existing annotations
+                const memberName = sessionStorage.getItem('memberName') || 'Anonymous';
+                if (currentTask.annotations && currentTask.annotations[memberName]) {
+                    annotations = currentTask.annotations[memberName].data || [];
+                    renderAnnotations();
+                } else {
+                    annotations = [];
+                }
+                
+                // Load merged annotations
+                loadMergedAnnotations();
+            } catch (error) {
+                console.error('Failed to load task:', error);
+            }
+        }
+        
+        function selectLabel(name, color) {
+            selectedLabel = {name, color};
+            
+            // Update UI
+            document.querySelectorAll('.label-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.label === name) {
+                    btn.classList.add('active');
+                    btn.style.backgroundColor = color;
+                    btn.style.color = 'white';
+                } else {
+                    btn.style.backgroundColor = 'white';
+                    btn.style.color = '#333';
+                }
+            });
+            
+            // Enable text selection
+            enableTextSelection();
+        }
+        
+        function enableTextSelection() {
+            const container = document.getElementById('textContainer');
+            
+            container.onmouseup = function() {
+                const selection = window.getSelection();
+                const selectedText = selection.toString().trim();
+                
+                if (selectedText && selectedLabel) {
+                    const range = selection.getRangeAt(0);
+                    const start = getTextPosition(container, range.startContainer, range.startOffset);
+                    const end = getTextPosition(container, range.endContainer, range.endOffset);
+                    
+                    // Add annotation
+                    annotations.push({
+                        start: start,
+                        end: end,
+                        text: selectedText,
+                        label: selectedLabel.name,
+                        color: selectedLabel.color
+                    });
+                    
+                    renderAnnotations();
+                    selection.removeAllRanges();
+                }
+            };
+        }
+        
+        function getTextPosition(container, node, offset) {
+            let position = 0;
+            let currentNode = container.firstChild;
+            
+            while (currentNode && currentNode !== node) {
+                if (currentNode.nodeType === Node.TEXT_NODE) {
+                    position += currentNode.textContent.length;
+                }
+                currentNode = currentNode.nextSibling;
+            }
+            
+            return position + offset;
+        }
+        
+        function renderAnnotations() {
+            if (!currentTask) return;
+            
+            const container = document.getElementById('textContainer');
+            let text = currentTask.text;
+            let html = '';
+            let lastPos = 0;
+            
+            // Sort annotations by position
+            const sortedAnnotations = [...annotations].sort((a, b) => a.start - b.start);
+            
+            sortedAnnotations.forEach(ann => {
+                // Add text before annotation
+                html += text.substring(lastPos, ann.start);
+                
+                // Add annotated text
+                html += `<span class="entity" style="background: ${ann.color}30; border-bottom: 2px solid ${ann.color};" data-label="${ann.label}">${text.substring(ann.start, ann.end)}</span>`;
+                
+                lastPos = ann.end;
+            });
+            
+            // Add remaining text
+            html += text.substring(lastPos);
+            
+            container.innerHTML = html;
+        }
+        
+        async function saveAnnotations() {
+            if (!currentTask) {
+                alert('Please select a task first');
+                return;
+            }
+            
+            const memberName = sessionStorage.getItem('memberName') || 'Anonymous';
+            
+            try {
+                const response = await fetch(`/collab/workspaces/${workspaceId}/tasks/${currentTask.id}/annotate`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        annotations: annotations,
+                        member_name: memberName
+                    })
+                });
+                
+                if (response.ok) {
+                    alert('Annotations saved successfully!');
+                    loadMergedAnnotations();
+                }
+            } catch (error) {
+                console.error('Failed to save annotations:', error);
+            }
+        }
+        
+        function clearAnnotations() {
+            annotations = [];
+            renderAnnotations();
+        }
+        
+        async function addTask() {
+            const text = document.getElementById('newTaskText').value.trim();
+            if (!text) return;
+            
+            try {
+                const response = await fetch(`/collab/workspaces/${workspaceId}/tasks`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({text})
+                });
+                
+                if (response.ok) {
+                    document.getElementById('newTaskText').value = '';
+                    await loadTasks();
+                }
+            } catch (error) {
+                console.error('Failed to add task:', error);
+            }
+        }
+        
+        async function loadMergedAnnotations() {
+            if (!currentTask) return;
+            
+            const strategy = document.getElementById('mergeStrategy').value;
+            
+            try {
+                const response = await fetch(`/collab/workspaces/${workspaceId}/tasks/${currentTask.id}/merge?strategy=${strategy}`);
+                const data = await response.json();
+                
+                const mergedDiv = document.getElementById('mergedAnnotations');
+                
+                if (data.merged_annotations.length === 0) {
+                    mergedDiv.innerHTML = '<p style="color: #999;">No merged annotations yet</p>';
+                } else {
+                    mergedDiv.innerHTML = data.merged_annotations.map(ann => `
+                        <div style="margin-bottom: 10px; padding: 10px; background: white; border-radius: 4px;">
+                            <span style="background: ${ann.color || '#ddd'}30; padding: 2px 6px; border-radius: 3px;">
+                                ${ann.text || currentTask.text.substring(ann.start, ann.end)}
+                            </span>
+                            <span style="color: ${ann.color || '#666'}; font-weight: 500; margin-left: 10px;">
+                                ${ann.label}
+                            </span>
+                            <span class="annotator-badge">
+                                👥 ${ann.annotators.join(', ')}
+                            </span>
+                            <span class="confidence-badge">
+                                ${Math.round(ann.confidence * 100)}%
+                            </span>
+                        </div>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('Failed to load merged annotations:', error);
+            }
+        }
+        
+        async function exportWorkspace() {
+            const strategy = document.getElementById('mergeStrategy').value;
+            
+            try {
+                const response = await fetch(`/collab/workspaces/${workspaceId}/export?strategy=${strategy}`);
+                const data = await response.json();
+                
+                // Download as JSON
+                const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `workspace_${workspaceId}_export.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+            } catch (error) {
+                console.error('Failed to export workspace:', error);
+            }
+        }
+    </script>
+</body>
+</html>

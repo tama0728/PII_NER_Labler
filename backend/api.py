@@ -148,8 +148,8 @@ def import_data(project_id):
 @login_required
 def get_config():
     """Get Label Studio XML configuration"""
-    from ner_extractor import NERExtractor
-    extractor = NERExtractor()
+    from flask import current_app
+    extractor = current_app.ner_extractor  # Use shared instance
     return jsonify({
         'basic_config': extractor.get_label_config_xml(),
         'enhanced_config': extractor.get_enhanced_config_xml(),

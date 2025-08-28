@@ -1,0 +1,1067 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Team Workspace - NER Annotation Interface</title>
+    <style>
+        * { 
+            box-sizing: border-box; 
+            margin: 0; 
+            padding: 0; 
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
+            background: #f1f1f1;
+            color: #333;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 16px;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            background: white;
+            padding: 16px 20px;
+            border-radius: 3px;
+            margin-bottom: 16px;
+            box-shadow: 2px 2px 8px #AAA;
+            border: 1px solid #e8e8e8;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header-left h1 {
+            font-size: 20px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 4px;
+        }
+        
+        .header-left p {
+            font-size: 13px;
+            color: #7f8c8d;
+        }
+        
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .member-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 15px;
+            background: #3498db;
+            color: white;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .controls {
+            background: white;
+            padding: 16px 20px;
+            border-radius: 3px;
+            margin-bottom: 16px;
+            box-shadow: 2px 2px 8px #AAA;
+            border: 1px solid #e8e8e8;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: #f8f9fa;
+            color: #333;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        
+        .btn:hover {
+            background: #e9ecef;
+            border-color: #adb5bd;
+        }
+        
+        .btn-primary {
+            background: #3498db;
+            color: white;
+            border-color: #3498db;
+        }
+        
+        .btn-primary:hover {
+            background: #2980b9;
+            border-color: #2980b9;
+        }
+        
+        .btn-success {
+            background: #27ae60;
+            color: white;
+            border-color: #27ae60;
+        }
+        
+        .btn-success:hover {
+            background: #229954;
+            border-color: #229954;
+        }
+        
+        .annotation-interface {
+            display: flex;
+            gap: 16px;
+            flex: 1;
+            min-height: 0;
+        }
+        
+        .sidebar {
+            width: 280px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        
+        .tasks-panel {
+            background: white;
+            border-radius: 3px;
+            box-shadow: 2px 2px 8px #AAA;
+            border: 1px solid #e8e8e8;
+            display: flex;
+            flex-direction: column;
+            min-height: 300px;
+        }
+        
+        .tasks-header {
+            padding: 16px;
+            border-bottom: 1px solid #e8e8e8;
+            background: #f8f9fa;
+            border-radius: 3px 3px 0 0;
+        }
+        
+        .tasks-header h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .tasks-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px;
+        }
+        
+        .task-item {
+            padding: 12px;
+            margin-bottom: 6px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            cursor: pointer;
+            border: 1px solid #e9ecef;
+            transition: all 0.2s;
+        }
+        
+        .task-item:hover {
+            background: #e9ecef;
+            border-color: #dee2e6;
+        }
+        
+        .task-item.active {
+            background: #3498db;
+            color: white;
+            border-color: #2980b9;
+        }
+        
+        .task-text {
+            font-size: 13px;
+            line-height: 1.4;
+            margin-bottom: 6px;
+        }
+        
+        .task-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+            opacity: 0.7;
+        }
+        
+        .labels-panel {
+            background: #343c7f;
+            border-radius: 3px;
+            padding: 16px;
+            box-shadow: 2px 2px 8px #AAA;
+            border: 1px solid #2c3566;
+            flex: 1;
+        }
+        
+        .labels-panel h3 {
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #4a5490;
+        }
+        
+        .label-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 12px;
+            margin: 6px 0;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 13px;
+            font-weight: 500;
+            border: 2px solid transparent;
+        }
+        
+        .label-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .label-item.active {
+            border-color: white;
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        .label-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 3px;
+            margin-right: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .label-name {
+            color: white;
+        }
+        
+        .label-hotkey {
+            margin-left: auto;
+            font-size: 11px;
+            opacity: 0.7;
+            color: white;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+        
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .text-panel {
+            flex: 1;
+            background: white;
+            border-radius: 3px;
+            box-shadow: 2px 2px 8px #AAA;
+            border: 1px solid #e8e8e8;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+        
+        .text-header {
+            padding: 12px 20px;
+            border-bottom: 1px solid #e8e8e8;
+            background: #f8f9fa;
+            font-size: 13px;
+            color: #6c757d;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .text-content {
+            padding: 20px;
+            font-size: 15px;
+            line-height: 1.6;
+            user-select: text;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            flex: 1;
+            overflow-y: auto;
+            font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif;
+            cursor: text;
+        }
+        
+        .entity-highlight {
+            padding: 2px 4px;
+            border-radius: 3px;
+            cursor: pointer;
+            border: 1px solid;
+            position: relative;
+            margin: 0 1px;
+            transition: all 0.2s;
+        }
+        
+        .entity-highlight:hover {
+            opacity: 0.8;
+            transform: translateY(-1px);
+        }
+        
+        .entity-label {
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: 500;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+        }
+        
+        .entity-highlight:hover .entity-label {
+            opacity: 1;
+        }
+        
+        .collaboration-panel {
+            background: white;
+            border-radius: 3px;
+            box-shadow: 2px 2px 8px #AAA;
+            border: 1px solid #e8e8e8;
+            margin-top: 16px;
+            padding: 16px;
+            max-height: 250px;
+            overflow-y: auto;
+        }
+        
+        .collaboration-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        
+        .collaboration-header h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .merge-controls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        
+        .merge-select {
+            padding: 4px 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        
+        .merged-annotations {
+            min-height: 60px;
+        }
+        
+        .merged-annotation {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            margin-bottom: 6px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            border-left: 4px solid #3498db;
+        }
+        
+        .merged-text {
+            flex: 1;
+            margin-right: 10px;
+        }
+        
+        .merged-label {
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        
+        .merged-meta {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+        
+        .annotator-badge {
+            background: #e9ecef;
+            color: #495057;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 10px;
+            font-weight: 500;
+        }
+        
+        .confidence-badge {
+            background: #28a745;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 10px;
+            font-weight: 500;
+        }
+        
+        .file-upload {
+            display: none;
+        }
+        
+        .upload-area {
+            border: 2px dashed #ddd;
+            border-radius: 4px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .upload-area:hover {
+            border-color: #3498db;
+            background: #f8f9fa;
+        }
+        
+        .upload-area.dragover {
+            border-color: #3498db;
+            background: #e3f2fd;
+        }
+        
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #6c757d;
+            font-style: italic;
+        }
+        
+        .add-task-form {
+            padding: 12px;
+            border-top: 1px solid #e8e8e8;
+            background: #f8f9fa;
+        }
+        
+        .add-task-input {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-bottom: 8px;
+        }
+        
+        .shortcuts-hint {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 6px;
+            font-size: 12px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+        
+        .shortcuts-hint.show {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-left">
+                <h1 id="workspaceName">Loading Workspace...</h1>
+                <p>Team Collaboration NER Annotation Interface</p>
+            </div>
+            <div class="header-right">
+                <div class="member-info">
+                    <span>👤</span>
+                    <span id="memberName">Anonymous</span>
+                </div>
+                <button class="btn" onclick="exportWorkspace()">📥 Export</button>
+                <button class="btn" onclick="window.location.href='/collaborate'">🔙 Back</button>
+            </div>
+        </div>
+        
+        <!-- Controls -->
+        <div class="controls">
+            <button class="btn btn-primary" onclick="showUploadModal()">📁 Upload Files</button>
+            <button class="btn btn-success" onclick="saveAnnotations()" id="saveBtn">💾 Save</button>
+            <button class="btn" onclick="clearAnnotations()">🗑️ Clear</button>
+            <button class="btn" onclick="showShortcuts()" title="Show keyboard shortcuts">⌨️</button>
+            <span style="margin-left: auto; font-size: 12px; color: #6c757d;">
+                Press <strong>Ctrl+S</strong> to save, <strong>Esc</strong> to clear selection
+            </span>
+        </div>
+        
+        <!-- Main annotation interface -->
+        <div class="annotation-interface">
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <!-- Tasks Panel -->
+                <div class="tasks-panel">
+                    <div class="tasks-header">
+                        <h3>Tasks (<span id="totalTasks">0</span>)</h3>
+                    </div>
+                    <div class="tasks-list" id="tasksList">
+                        <div class="empty-state">
+                            <p>📝 No tasks yet</p>
+                            <small>Upload files or add text manually</small>
+                        </div>
+                    </div>
+                    <div class="add-task-form">
+                        <input type="text" id="manualTaskInput" class="add-task-input" placeholder="Type text to annotate...">
+                        <button class="btn btn-primary" onclick="addManualTask()" style="width: 100%; font-size: 12px;">Add Task</button>
+                    </div>
+                </div>
+                
+                <!-- Labels Panel -->
+                <div class="labels-panel">
+                    <h3>Entity Labels</h3>
+                    <div id="labelsContainer">
+                        <!-- Labels will be loaded here -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Main Content -->
+            <div class="main-content">
+                <!-- Text Panel -->
+                <div class="text-panel">
+                    <div class="text-header">
+                        <span>Select text and choose a label to annotate</span>
+                        <span id="currentTaskInfo">No task selected</span>
+                    </div>
+                    <div class="text-content" id="textContent">
+                        <div class="empty-state">
+                            <p>📋 Select a task from the sidebar to start annotating</p>
+                            <small>You can use keyboard shortcuts for faster annotation</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Collaboration Panel -->
+                <div class="collaboration-panel">
+                    <div class="collaboration-header">
+                        <h3>Team Annotations</h3>
+                        <div class="merge-controls">
+                            <select id="mergeStrategy" class="merge-select" onchange="loadMergedAnnotations()">
+                                <option value="union">Union (All)</option>
+                                <option value="intersection">Intersection (Agreed)</option>
+                                <option value="majority">Majority (>50%)</option>
+                            </select>
+                            <button class="btn" onclick="loadMergedAnnotations()">🔄</button>
+                        </div>
+                    </div>
+                    <div class="merged-annotations" id="mergedAnnotations">
+                        <div class="empty-state">
+                            <p>🤝 No team annotations yet</p>
+                            <small>Annotations from team members will appear here</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- File Upload Modal -->
+    <div id="uploadModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+        <div style="background: white; padding: 30px; border-radius: 8px; max-width: 500px; width: 90%;">
+            <h2 style="margin-bottom: 20px;">Upload Text Files</h2>
+            <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+                <p>📁 Click to select files or drag & drop</p>
+                <small>Supported: .txt, .csv, .json (Max 16MB)</small>
+            </div>
+            <input type="file" id="fileInput" class="file-upload" multiple accept=".txt,.csv,.json">
+            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+                <button class="btn" onclick="hideUploadModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="uploadFiles()">Upload</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Shortcuts Hint -->
+    <div class="shortcuts-hint" id="shortcutsHint">
+        <strong>Keyboard Shortcuts:</strong><br>
+        1-9: Select label | Ctrl+S: Save | Esc: Clear selection | Tab: Next task
+    </div>
+    
+    <script>
+        // Global variables
+        const workspaceId = '{{ workspace_id }}';
+        let currentTask = null;
+        let selectedLabel = null;
+        let workspaceData = null;
+        let annotations = [];
+        let isSelecting = false;
+        
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadWorkspace();
+            await loadTasks();
+            setupEventListeners();
+            setupFileUpload();
+        });
+        
+        // Load workspace data
+        async function loadWorkspace() {
+            try {
+                const response = await fetch(`/collab/workspaces/${workspaceId}`);
+                workspaceData = await response.json();
+                
+                document.getElementById('workspaceName').textContent = workspaceData.name;
+                
+                // Load labels
+                const labelsContainer = document.getElementById('labelsContainer');
+                labelsContainer.innerHTML = workspaceData.labels.map((label, index) => `
+                    <div class="label-item" onclick="selectLabel('${label.name}', '${label.color}')" data-label="${label.name}">
+                        <div class="label-color" style="background: ${label.color};"></div>
+                        <div class="label-name">${label.name}</div>
+                        <div class="label-hotkey">${index + 1}</div>
+                    </div>
+                `).join('');
+                
+                // Get member name
+                const memberName = sessionStorage.getItem('memberName') || 'Anonymous';
+                document.getElementById('memberName').textContent = memberName;
+                
+            } catch (error) {
+                console.error('Failed to load workspace:', error);
+            }
+        }
+        
+        // Load tasks
+        async function loadTasks() {
+            try {
+                const response = await fetch(`/collab/workspaces/${workspaceId}/tasks`);
+                const tasks = await response.json();
+                
+                document.getElementById('totalTasks').textContent = tasks.length;
+                
+                const tasksList = document.getElementById('tasksList');
+                if (tasks.length === 0) {
+                    tasksList.innerHTML = '<div class="empty-state"><p>📝 No tasks yet</p><small>Upload files or add text manually</small></div>';
+                } else {
+                    tasksList.innerHTML = tasks.map(task => `
+                        <div class="task-item" onclick="selectTask('${task.id}')" data-task-id="${task.id}">
+                            <div class="task-text">${task.text.substring(0, 80)}${task.text.length > 80 ? '...' : ''}</div>
+                            <div class="task-meta">
+                                <span>${task.status || 'pending'}</span>
+                                <span>${new Date(task.created_at).toLocaleDateString()}</span>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('Failed to load tasks:', error);
+            }
+        }
+        
+        // Select task
+        async function selectTask(taskId) {
+            // Update UI
+            document.querySelectorAll('.task-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            document.querySelector(`[data-task-id="${taskId}"]`).classList.add('active');
+            
+            try {
+                const response = await fetch(`/collab/workspaces/${workspaceId}/tasks/${taskId}`);
+                currentTask = await response.json();
+                
+                // Display text
+                document.getElementById('textContent').innerHTML = currentTask.text;
+                document.getElementById('currentTaskInfo').textContent = `Task: ${taskId}`;
+                
+                // Load existing annotations
+                const memberName = sessionStorage.getItem('memberName') || 'Anonymous';
+                if (currentTask.annotations && currentTask.annotations[memberName]) {
+                    annotations = currentTask.annotations[memberName].data || [];
+                    renderAnnotations();
+                } else {
+                    annotations = [];
+                }
+                
+                // Load merged annotations
+                loadMergedAnnotations();
+                
+                // Enable text selection
+                enableTextSelection();
+                
+            } catch (error) {
+                console.error('Failed to load task:', error);
+            }
+        }
+        
+        // Select label
+        function selectLabel(name, color) {
+            selectedLabel = {name, color};
+            
+            // Update UI
+            document.querySelectorAll('.label-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            document.querySelector(`[data-label="${name}"]`).classList.add('active');
+        }
+        
+        // Enable text selection for annotation
+        function enableTextSelection() {
+            const textContent = document.getElementById('textContent');
+            
+            textContent.onmouseup = function() {
+                if (!selectedLabel) {
+                    alert('Please select a label first');
+                    return;
+                }
+                
+                const selection = window.getSelection();
+                const selectedText = selection.toString().trim();
+                
+                if (selectedText && currentTask) {
+                    const range = selection.getRangeAt(0);
+                    const start = getTextPosition(textContent, range.startContainer, range.startOffset);
+                    const end = getTextPosition(textContent, range.endContainer, range.endOffset);
+                    
+                    // Add annotation
+                    annotations.push({
+                        start: start,
+                        end: end,
+                        text: selectedText,
+                        label: selectedLabel.name,
+                        color: selectedLabel.color
+                    });
+                    
+                    renderAnnotations();
+                    selection.removeAllRanges();
+                }
+            };
+        }
+        
+        // Get text position helper
+        function getTextPosition(container, node, offset) {
+            let position = 0;
+            let walker = document.createTreeWalker(
+                container,
+                NodeFilter.SHOW_TEXT,
+                null,
+                false
+            );
+            
+            let currentNode;
+            while (currentNode = walker.nextNode()) {
+                if (currentNode === node) {
+                    return position + offset;
+                }
+                position += currentNode.textContent.length;
+            }
+            return position;
+        }
+        
+        // Render annotations
+        function renderAnnotations() {
+            if (!currentTask) return;
+            
+            const textContent = document.getElementById('textContent');
+            const text = currentTask.text;
+            let html = '';
+            let lastPos = 0;
+            
+            // Sort annotations by position
+            const sortedAnnotations = [...annotations].sort((a, b) => a.start - b.start);
+            
+            sortedAnnotations.forEach((ann, index) => {
+                // Add text before annotation
+                html += text.substring(lastPos, ann.start);
+                
+                // Add annotated text
+                html += `<span class="entity-highlight" style="background: ${ann.color}30; border-color: ${ann.color};" onclick="removeAnnotation(${index})">
+                    ${text.substring(ann.start, ann.end)}
+                    <span class="entity-label">${ann.label}</span>
+                </span>`;
+                
+                lastPos = ann.end;
+            });
+            
+            // Add remaining text
+            html += text.substring(lastPos);
+            
+            textContent.innerHTML = html;
+        }
+        
+        // Remove annotation
+        function removeAnnotation(index) {
+            if (confirm('Remove this annotation?')) {
+                annotations.splice(index, 1);
+                renderAnnotations();
+            }
+        }
+        
+        // Save annotations
+        async function saveAnnotations() {
+            if (!currentTask) {
+                alert('Please select a task first');
+                return;
+            }
+            
+            const memberName = sessionStorage.getItem('memberName') || 'Anonymous';
+            
+            try {
+                const response = await fetch(`/collab/workspaces/${workspaceId}/tasks/${currentTask.id}/annotate`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        annotations: annotations,
+                        member_name: memberName
+                    })
+                });
+                
+                if (response.ok) {
+                    document.getElementById('saveBtn').textContent = '✅ Saved';
+                    setTimeout(() => {
+                        document.getElementById('saveBtn').textContent = '💾 Save';
+                    }, 2000);
+                    loadMergedAnnotations();
+                }
+            } catch (error) {
+                console.error('Failed to save annotations:', error);
+            }
+        }
+        
+        // Clear annotations
+        function clearAnnotations() {
+            if (confirm('Clear all annotations for this task?')) {
+                annotations = [];
+                renderAnnotations();
+            }
+        }
+        
+        // Load merged annotations
+        async function loadMergedAnnotations() {
+            if (!currentTask) return;
+            
+            const strategy = document.getElementById('mergeStrategy').value;
+            
+            try {
+                const response = await fetch(`/collab/workspaces/${workspaceId}/tasks/${currentTask.id}/merge?strategy=${strategy}`);
+                const data = await response.json();
+                
+                const mergedDiv = document.getElementById('mergedAnnotations');
+                
+                if (data.merged_annotations.length === 0) {
+                    mergedDiv.innerHTML = '<div class="empty-state"><p>🤝 No team annotations yet</p></div>';
+                } else {
+                    mergedDiv.innerHTML = data.merged_annotations.map(ann => `
+                        <div class="merged-annotation" style="border-left-color: ${ann.color || '#3498db'};">
+                            <div class="merged-text">${ann.text || currentTask.text.substring(ann.start, ann.end)}</div>
+                            <div class="merged-label" style="color: ${ann.color || '#3498db'};">${ann.label}</div>
+                            <div class="merged-meta">
+                                <span class="annotator-badge">👥 ${ann.annotators.join(', ')}</span>
+                                <span class="confidence-badge">${Math.round(ann.confidence * 100)}%</span>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('Failed to load merged annotations:', error);
+            }
+        }
+        
+        // Add manual task
+        async function addManualTask() {
+            const input = document.getElementById('manualTaskInput');
+            const text = input.value.trim();
+            
+            if (!text) return;
+            
+            try {
+                const response = await fetch(`/collab/workspaces/${workspaceId}/tasks`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({text})
+                });
+                
+                if (response.ok) {
+                    input.value = '';
+                    await loadTasks();
+                }
+            } catch (error) {
+                console.error('Failed to add task:', error);
+            }
+        }
+        
+        // File upload functions
+        function setupFileUpload() {
+            const uploadArea = document.querySelector('.upload-area');
+            const fileInput = document.getElementById('fileInput');
+            
+            // Drag and drop
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
+            });
+            
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.classList.remove('dragover');
+            });
+            
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                fileInput.files = e.dataTransfer.files;
+            });
+        }
+        
+        function showUploadModal() {
+            document.getElementById('uploadModal').style.display = 'flex';
+        }
+        
+        function hideUploadModal() {
+            document.getElementById('uploadModal').style.display = 'none';
+        }
+        
+        async function uploadFiles() {
+            const fileInput = document.getElementById('fileInput');
+            const files = fileInput.files;
+            
+            if (files.length === 0) {
+                alert('Please select files first');
+                return;
+            }
+            
+            const formData = new FormData();
+            for (let file of files) {
+                formData.append('files[]', file);
+            }
+            
+            try {
+                const response = await fetch(`/collab/workspaces/${workspaceId}/upload/batch`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    alert(`Successfully uploaded ${result.total_created_tasks} tasks from ${result.total_files} files`);
+                    hideUploadModal();
+                    fileInput.value = '';
+                    await loadTasks();
+                } else {
+                    alert('Upload failed: ' + result.error);
+                }
+            } catch (error) {
+                console.error('Upload failed:', error);
+                alert('Upload failed');
+            }
+        }
+        
+        // Export workspace
+        async function exportWorkspace() {
+            const strategy = document.getElementById('mergeStrategy').value;
+            
+            try {
+                const response = await fetch(`/collab/workspaces/${workspaceId}/export?strategy=${strategy}`);
+                const data = await response.json();
+                
+                // Download as JSON
+                const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${workspaceData.name}_annotations.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+            } catch (error) {
+                console.error('Failed to export workspace:', error);
+            }
+        }
+        
+        // Keyboard shortcuts
+        function setupEventListeners() {
+            document.addEventListener('keydown', (e) => {
+                // Number keys for label selection
+                if (e.key >= '1' && e.key <= '9') {
+                    const index = parseInt(e.key) - 1;
+                    const labelItems = document.querySelectorAll('.label-item');
+                    if (labelItems[index]) {
+                        labelItems[index].click();
+                    }
+                }
+                
+                // Ctrl+S to save
+                if (e.ctrlKey && e.key === 's') {
+                    e.preventDefault();
+                    saveAnnotations();
+                }
+                
+                // Escape to clear selection
+                if (e.key === 'Escape') {
+                    window.getSelection().removeAllRanges();
+                    document.querySelectorAll('.label-item').forEach(item => {
+                        item.classList.remove('active');
+                    });
+                    selectedLabel = null;
+                }
+                
+                // Tab for next task
+                if (e.key === 'Tab') {
+                    e.preventDefault();
+                    const tasks = document.querySelectorAll('.task-item');
+                    const current = document.querySelector('.task-item.active');
+                    if (current) {
+                        const currentIndex = Array.from(tasks).indexOf(current);
+                        const next = tasks[currentIndex + 1] || tasks[0];
+                        next.click();
+                    } else if (tasks.length > 0) {
+                        tasks[0].click();
+                    }
+                }
+            });
+        }
+        
+        function showShortcuts() {
+            const hint = document.getElementById('shortcutsHint');
+            hint.classList.add('show');
+            setTimeout(() => {
+                hint.classList.remove('show');
+            }, 3000);
+        }
+        
+        // Enter key for manual task input
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('manualTaskInput').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    addManualTask();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
