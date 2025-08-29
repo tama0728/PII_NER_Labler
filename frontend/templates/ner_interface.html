@@ -1035,7 +1035,7 @@
         </div>
         
         <div class="controls">
-            <textarea class="textarea" id="textInput" placeholder="Enter text to annotate...">John Smith works at Microsoft in Seattle. He previously worked at Google in Mountain View.</textarea>
+            <textarea class="textarea" id="textInput" placeholder="Enter text to annotate..."></textarea>
             <button class="btn primary" onclick="loadText()">Load Text</button>
             <button class="btn" onclick="showUploadModal()">📁 Upload Files</button>
             <button class="btn" onclick="clearAnnotations()">Clear</button>
@@ -1906,28 +1906,61 @@
         
         // Export annotations
         async function exportAnnotations() {
-            if (!currentTaskId) {
-                alert('No task to export');
-                return;
-            }
-            
             try {
-                const response = await fetch(`/api/tasks/${currentTaskId}/export`);
-                const data = await response.json();
+                // Use client-side data (uploadedTasks) instead of API
+                const allTasks = window.uploadedTasks;
                 
-                // Show export options
-                const format = prompt('Export format: (json/conll)', 'json');
-                
-                if (format === 'conll') {
-                    const conllResponse = await fetch(`/api/tasks/${currentTaskId}/conll`);
-                    const conllData = await conllResponse.json();
-                    downloadFile('annotations.conll', conllData.conll);
-                } else {
-                    downloadFile('annotations.json', JSON.stringify(data, null, 2));
+                if (!allTasks || allTasks.length === 0) {
+                    alert('내보낼 태스크가 없습니다. 파일을 먼저 업로드해주세요.');
+                    return;
                 }
                 
+                // Convert all tasks to JSONL format
+                let jsonlContent = '';
+                
+                allTasks.forEach((task, index) => {
+                    // Create JSONL line for each task (match original structure)
+                    const jsonlLine = {
+                        metadata: task.metadata && task.metadata.metadata ? task.metadata.metadata : (task.metadata || {}),
+                        text: task.text || '',
+                        entities: []
+                    };
+                    
+                    // Add annotations if they exist for this task
+                    if (task.annotations && Array.isArray(task.annotations)) {
+                        task.annotations.forEach(annotation => {
+                            jsonlLine.entities.push({
+                                span_text: task.text ? task.text.substring(annotation.start, annotation.end) : '',
+                                entity_type: annotation.labels && annotation.labels[0] ? annotation.labels[0] : '',
+                                start_offset: annotation.start,
+                                end_offset: annotation.end,
+                                span_id: annotation.span_id || '',
+                                entity_id: annotation.entity_id || '',
+                                annotator: annotation.annotator || '',
+                                identifier_type: annotation.identifier_type || ''
+                            });
+                        });
+                    }
+                    
+                    jsonlContent += JSON.stringify(jsonlLine) + '\n';
+                });
+                
+                // Generate filename based on first task's original filename or use default
+                let filename = 'annotations_completed.jsonl';
+                const firstTask = allTasks[0];
+                if (firstTask && firstTask.metadata && firstTask.metadata.filename) {
+                    const originalFilename = firstTask.metadata.filename;
+                    const nameWithoutExt = originalFilename.replace(/\.[^/.]+$/, "");
+                    filename = `${nameWithoutExt}_completed.jsonl`;
+                }
+                
+                downloadFile(filename, jsonlContent);
+                
+                alert(`${allTasks.length}개 태스크가 ${filename} 파일로 내보내기되었습니다.`);
+                
             } catch (error) {
-                alert('Error exporting: ' + error.message);
+                console.error('Export error:', error);
+                alert('내보내기 중 오류가 발생했습니다: ' + error.message);
             }
         }
         
@@ -2907,7 +2940,7 @@
         
         function handleFileSelection(files) {
             const filePreview = document.getElementById('filePreview');
-            const supportedTypes = ['txt', 'json', 'jsonl', 'csv'];
+            const supportedTypes = ['jsonl'];
             const maxSize = 16 * 1024 * 1024; // 16MB
             
             if (files.length === 0) return;
@@ -3042,16 +3075,15 @@
                         selectTask(allTasks[0].id);
                     }
                     
-                    let message = `✅ Upload Completed!\n\n`;
-                    message += `📁 Files processed: ${result.total_files}\n`;
-                    message += `📝 Tasks created: ${result.total_created_tasks}\n`;
-                    message += `📝 First text loaded for annotation\n\n`;
+                    let message = `✅ 업로드 완료!\n\n`;
+                    message += `📁 처리된 파일: ${result.total_files}개\n`;
+                    message += `📝 생성된 태스크: ${result.total_created_tasks}개\n\n`;
                     
                     if (result.results) {
-                        message += `File Details:\n`;
+                        message += `파일 상세 정보:\n`;
                         result.results.forEach(fileResult => {
                             if (fileResult.status === 'success') {
-                                message += `• ${fileResult.filename}: ${fileResult.created_tasks} tasks\n`;
+                                message += `• ${fileResult.filename}: ${fileResult.created_tasks}개 태스크\n`;
                             } else {
                                 message += `• ${fileResult.filename}: ❌ ${fileResult.message}\n`;
                             }
@@ -3062,11 +3094,11 @@
                     hideUploadModal();
                     resetUploadArea();
                 } else {
-                    alert('Upload failed: ' + result.error);
+                    alert('업로드 실패: ' + result.error);
                 }
             } catch (error) {
                 console.error('Upload failed:', error);
-                alert('Network error during upload. Please try again.');
+                alert('업로드 중 네트워크 오류가 발생했습니다. 다시 시도해주세요.');
             } finally {
                 uploadArea.classList.remove('processing');
                 uploadTitle.textContent = originalTitle;
@@ -3123,6 +3155,11 @@
         
         function parseFileContent(content, filename) {
             const extension = filename.split('.').pop().toLowerCase();
+            
+            if (extension !== 'jsonl') {
+                throw new Error(`지원하지 않는 파일 형식: ${extension}. JSONL 파일만 지원됩니다.`);
+            }
+            
             const texts = [];
             const labels = new Set();  // 추출된 entity_type들을 저장 (전체)
             const textAnnotations = [];  // 각 텍스트에 대한 annotation 정보
@@ -3130,43 +3167,35 @@
             const textMetadata = [];  // 각 텍스트별 원본 메타데이터 저장
             
             try {
-                if (extension === 'txt') {
-                    const lines = content.trim().split('\n');
-                    const validLines = lines.filter(line => line.trim());
-                    texts.push(...validLines);
-                    // TXT 파일은 annotation과 라벨 없음
-                    validLines.forEach(() => {
-                        textAnnotations.push([]);
-                        textLabels.push([]); // 빈 라벨 배열
-                        textMetadata.push(null); // TXT 파일에는 메타데이터 없음
-                    });
-                } else if (extension === 'json') {
-                    const data = JSON.parse(content);
-                    // 단일 객체를 배열로 변환
-                    const dataArray = Array.isArray(data) ? data : [data];
-                    dataArray.forEach(item => {
-                            if (typeof item === 'string') {
-                                texts.push(item.trim());
+                // JSONL 처리 - 각 줄이 별도의 JSON 객체
+                const lines = content.trim().split('\n');
+                lines.forEach((line, lineNum) => {
+                    if (line.trim()) {
+                        try {
+                            const data = JSON.parse(line);
+                            if (typeof data === 'string') {
+                                texts.push(data.trim());
                                 textAnnotations.push([]); // 빈 annotation
                                 textLabels.push([]); // 빈 라벨 배열
-                            } else if (typeof item === 'object') {
+                                textMetadata.push(null); // 메타데이터 없음
+                            } else if (typeof data === 'object') {
                                 // Check for KDPII NER format with entities
-                                if ('text' in item && 'entities' in item) {
-                                    texts.push(item.text.trim());
+                                if ('text' in data && 'entities' in data) {
+                                    texts.push(data.text.trim());
                                     
                                     // 원본 메타데이터 추출 (text, entities 제외한 나머지 필드들)
                                     const metadata = {};
-                                    Object.keys(item).forEach(key => {
+                                    Object.keys(data).forEach(key => {
                                         if (key !== 'text' && key !== 'entities') {
-                                            metadata[key] = item[key];
+                                            metadata[key] = data[key];
                                         }
                                     });
                                     
                                     // Process entities and convert to annotation format
                                     const annotations = [];
-                                    const itemLabels = new Map(); // 이 텍스트의 라벨들 (이름 -> 색상 매핑)
-                                    if (Array.isArray(item.entities)) {
-                                        item.entities.forEach((entity, index) => {
+                                    const itemLabels = new Map(); // 이 텍스트의 라벨들과 색상
+                                    if (Array.isArray(data.entities)) {
+                                        data.entities.forEach((entity, index) => {
                                             if (entity && typeof entity === 'object' && entity.entity_type) {
                                                 labels.add(entity.entity_type); // 전체 라벨 세트에 추가
                                                 
@@ -3177,11 +3206,11 @@
                                                 
                                                 // Convert to internal annotation format
                                                 annotations.push({
-                                                    start: entity.start_offset,
-                                                    end: entity.end_offset,
-                                                    text: entity.span_text,
+                                                    start: entity.start_offset || entity.start,
+                                                    end: entity.end_offset || entity.end,
+                                                    text: entity.span_text || data.text.substring(entity.start_offset || entity.start, entity.end_offset || entity.end),
                                                     labels: [entity.entity_type],
-                                                    annotator: entity.annotator || currentAnnotator,
+                                                    annotator: entity.annotator || 'Anonymous',
                                                     identifier_type: entity.identifier_type || 'default',
                                                     span_id: entity.span_id || (index + 1),
                                                     entity_id: entity.entity_id || (index + 1)
@@ -3190,7 +3219,7 @@
                                         });
                                     }
                                     textAnnotations.push(annotations);
-                                    // Map을 객체 배열로 변환
+                                    // Map을 {name, color} 객체 배열로 변환
                                     const labelArray = Array.from(itemLabels.entries()).map(([name, color]) => ({
                                         name: name,
                                         color: color
@@ -3198,9 +3227,10 @@
                                     textLabels.push(labelArray);
                                     textMetadata.push(Object.keys(metadata).length > 0 ? metadata : null);
                                 } else {
-                                    for (const key of ['text', 'content', 'sentence', 'document', 'message']) {
-                                        if (key in item && typeof item[key] === 'string') {
-                                            texts.push(item[key].trim());
+                                    // 텍스트만 있는 경우
+                                    for (const key of ['text', 'content', 'sentence', 'document', 'message', 'data']) {
+                                        if (key in data && typeof data[key] === 'string') {
+                                            texts.push(data[key].trim());
                                             textAnnotations.push([]); // 빈 annotation
                                             textLabels.push([]); // 빈 라벨 배열
                                             textMetadata.push(null); // 메타데이터 없음
@@ -3209,86 +3239,14 @@
                                     }
                                 }
                             }
-                    });
-                } else if (extension === 'jsonl') {
-                    const lines = content.trim().split('\n');
-                    lines.forEach(line => {
-                        if (line.trim()) {
-                            try {
-                                const data = JSON.parse(line);
-                                if (typeof data === 'string') {
-                                    texts.push(data.trim());
-                                    textAnnotations.push([]); // 빈 annotation
-                                    textLabels.push([]); // 빈 라벨 배열
-                                    textMetadata.push(null); // 메타데이터 없음
-                                } else if (typeof data === 'object') {
-                                    // Check for KDPII NER format with entities
-                                    if ('text' in data && 'entities' in data) {
-                                        texts.push(data.text.trim());
-                                        
-                                        // 원본 메타데이터 추출 (text, entities 제외한 나머지 필드들)
-                                        const metadata = {};
-                                        Object.keys(data).forEach(key => {
-                                            if (key !== 'text' && key !== 'entities') {
-                                                metadata[key] = data[key];
-                                            }
-                                        });
-                                        
-                                        // Process entities and convert to annotation format
-                                        const annotations = [];
-                                        const itemLabels = new Map(); // 이 텍스트의 라벨들과 색상
-                                        if (Array.isArray(data.entities)) {
-                                            data.entities.forEach((entity, index) => {
-                                                if (entity && typeof entity === 'object' && entity.entity_type) {
-                                                    labels.add(entity.entity_type); // 전체 라벨 세트에 추가
-                                                    
-                                                    // 이 텍스트에서 처음 보는 라벨이면 색상 할당
-                                                    if (!itemLabels.has(entity.entity_type)) {
-                                                        itemLabels.set(entity.entity_type, getRandomColor());
-                                                    }
-                                                    
-                                                    // Convert to internal annotation format
-                                                    annotations.push({
-                                                        start: entity.start_offset,
-                                                        end: entity.end_offset,
-                                                        text: entity.span_text,
-                                                        labels: [entity.entity_type],
-                                                        annotator: entity.annotator || currentAnnotator,
-                                                        identifier_type: entity.identifier_type || 'default',
-                                                        span_id: entity.span_id || (index + 1),
-                                                        entity_id: entity.entity_id || (index + 1)
-                                                    });
-                                                }
-                                            });
-                                        }
-                                        textAnnotations.push(annotations);
-                                        // Map을 {name, color} 객체 배열로 변환
-                                        const labelArray = Array.from(itemLabels.entries()).map(([name, color]) => ({
-                                            name: name,
-                                            color: color
-                                        }));
-                                        textLabels.push(labelArray);
-                                        textMetadata.push(Object.keys(metadata).length > 0 ? metadata : null);
-                                    } else {
-                                        for (const key of ['text', 'content', 'sentence', 'document', 'message', 'data']) {
-                                            if (key in data && typeof data[key] === 'string') {
-                                                texts.push(data[key].trim());
-                                                textAnnotations.push([]); // 빈 annotation
-                                                textLabels.push([]); // 빈 라벨 배열
-                                                textMetadata.push(null); // 메타데이터 없음
-                                                break;
-                                            }
-                                        }
-                                    }
-                                }
-                            } catch (e) {
-                                console.warn('Invalid JSON line:', line);
-                            }
+                        } catch (e) {
+                            console.warn(`라인 ${lineNum + 1}에서 JSON 파싱 오류:`, line);
                         }
-                    });
-                }
+                    }
+                });
             } catch (error) {
-                console.error('Error parsing file:', error);
+                console.error('JSONL 파일 파싱 오류:', error);
+                throw error;
             }
             
             const filteredTexts = [];
@@ -3687,18 +3645,17 @@
             <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
                 <div class="upload-icon">📁</div>
                 <p class="upload-title">Drop files here or click to browse</p>
-                <p class="upload-subtitle">Supported formats: TXT, JSON, JSONL, CSV</p>
+                <p class="upload-subtitle">지원 형식: JSONL만</p>
                 <div class="upload-details">
-                    <small>• TXT: Plain text files (line-by-line)</small><br>
-                    <small>• JSON: Array of strings or objects with text field</small><br>
-                    <small>• JSONL: JSON Lines (one JSON object per line)</small><br>
-                    <small>• CSV: First column or text column</small><br>
-                    <small style="color: #666;">Maximum file size: 16MB per file</small>
+                    <small>• JSONL: JSON Lines (한 줄당 하나의 JSON 객체)</small><br>
+                    <small>• 형식: {"text": "텍스트 내용", "entities": [...]}</small><br>
+                    <small>• 또는: {"text": "텍스트만 있는 경우"}</small><br>
+                    <small style="color: #666;">최대 파일 크기: 16MB</small>
                 </div>
                 <div class="file-preview" id="filePreview" style="display: none;"></div>
             </div>
             
-            <input type="file" id="fileInput" style="display: none;" multiple accept=".txt,.csv,.json,.jsonl">
+            <input type="file" id="fileInput" style="display: none;" multiple accept=".jsonl">
             
             <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
                 <button class="btn" onclick="hideUploadModal()">Cancel</button>

@@ -6,8 +6,6 @@ from flask import Blueprint, request, jsonify, session
 from backend.services.collaboration_service import CollaborationService
 import os
 import json
-import csv
-from io import StringIO
 from werkzeug.utils import secure_filename
 
 collab_bp = Blueprint('collab', __name__)
@@ -155,6 +153,55 @@ def export_workspace(workspace_id):
     
     return jsonify(export_data)
 
+@collab_bp.route('/workspaces/<workspace_id>/export/jsonl', methods=['GET'])
+def export_workspace_jsonl(workspace_id):
+    """Export all tasks in workspace as JSONL format"""
+    workspace = collab_service.get_workspace(workspace_id)
+    if not workspace:
+        return jsonify({'error': 'Workspace not found'}), 404
+    
+    tasks = workspace.get('tasks', {})
+    if not tasks:
+        return jsonify({'error': 'No tasks found in workspace'}), 404
+    
+    # Generate JSONL content
+    jsonl_lines = []
+    for task_id, task_data in tasks.items():
+        # Get task text and metadata
+        text = task_data.get('text', '')
+        metadata = task_data.get('metadata', {})
+        
+        # Get all annotations for this task
+        entities = []
+        annotations = task_data.get('annotations', {})
+        
+        for member_name, member_annotations in annotations.items():
+            for annotation in member_annotations:
+                entities.append({
+                    'start': annotation.get('start'),
+                    'end': annotation.get('end'),
+                    'entity_type': annotation.get('labels', [''])[0] if annotation.get('labels') else '',
+                    'span_id': annotation.get('span_id', ''),
+                    'entity_id': annotation.get('entity_id', ''),
+                    'identifier_type': annotation.get('identifier_type', 'default'),
+                    'annotator': member_name,
+                    'span_text': text[annotation.get('start', 0):annotation.get('end', 0)] if text else ''
+                })
+        
+        # Create JSONL line
+        jsonl_line = {
+            'text': text,
+            'entities': entities,
+            'metadata': metadata
+        }
+        
+        jsonl_lines.append(jsonl_line)
+    
+    return jsonify({
+        'jsonl_lines': jsonl_lines,
+        'total_tasks': len(jsonl_lines)
+    })
+
 @collab_bp.route('/workspaces/<workspace_id>/statistics', methods=['GET'])
 def get_statistics(workspace_id):
     """Get workspace statistics"""
@@ -205,7 +252,7 @@ def add_label(workspace_id):
     })
 
 # File upload configuration
-ALLOWED_EXTENSIONS = {'txt', 'csv', 'json', 'jsonl'}
+ALLOWED_EXTENSIONS = {'jsonl'}
 MAX_FILE_SIZE = 16 * 1024 * 1024  # 16MB
 
 def allowed_file(filename):
@@ -214,131 +261,61 @@ def allowed_file(filename):
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def parse_file_content(file, filename):
-    """Parse different file formats and extract texts and labels"""
+    """Parse JSONL format and extract texts and labels"""
     texts = []
     labels = set()  # 추출된 entity_type들을 저장
     file_extension = filename.rsplit('.', 1)[1].lower()
     
+    if file_extension != 'jsonl':
+        raise ValueError(f"Unsupported file format: {file_extension}. Only JSONL files are supported.")
+    
     try:
         content = file.read().decode('utf-8')
         
-        if file_extension == 'txt':
-            # Split by double newlines for paragraphs, or single newlines for sentences
-            lines = content.strip().split('\n')
-            texts = [line.strip() for line in lines if line.strip()]
-            
-        elif file_extension == 'csv':
-            # Assume first column contains text data
-            csv_reader = csv.reader(StringIO(content))
-            headers = next(csv_reader, None)  # Skip header if exists
-            
-            # Try to detect text column
-            text_column_idx = 0
-            if headers:
-                for i, header in enumerate(headers):
-                    if any(keyword in header.lower() for keyword in ['text', 'content', 'sentence', 'document']):
-                        text_column_idx = i
-                        break
-            
-            for row in csv_reader:
-                if len(row) > text_column_idx and row[text_column_idx].strip():
-                    texts.append(row[text_column_idx].strip())
-                    
-        elif file_extension == 'json':
-            # Support various JSON formats
-            data = json.loads(content)
-            
-            if isinstance(data, list):
-                # Array of texts or objects
-                for item in data:
-                    if isinstance(item, str):
-                        texts.append(item.strip())
-                    elif isinstance(item, dict):
-                        # Check for KDPII NER format with entities
-                        if 'text' in item and 'entities' in item:
-                            texts.append(item['text'].strip())
-                            # Extract entity_types from entities array
-                            if isinstance(item['entities'], list):
-                                for entity in item['entities']:
-                                    if isinstance(entity, dict) and 'entity_type' in entity:
-                                        labels.add(entity['entity_type'])
-                        else:
-                            # Look for common text fields
-                            for key in ['text', 'content', 'sentence', 'document', 'message']:
-                                if key in item and isinstance(item[key], str):
-                                    texts.append(item[key].strip())
+        # JSON Lines format - each line is a separate JSON object
+        lines = content.strip().split('\n')
+        for line_num, line in enumerate(lines, 1):
+            line = line.strip()
+            if not line:
+                continue
+                
+            try:
+                data = json.loads(line)
+                
+                if isinstance(data, str):
+                    texts.append(data.strip())
+                elif isinstance(data, dict):
+                    # Check for KDPII NER format with entities
+                    if 'text' in data and 'entities' in data:
+                        texts.append(data['text'].strip())
+                        # Extract entity_types from entities array
+                        if isinstance(data['entities'], list):
+                            for entity in data['entities']:
+                                if isinstance(entity, dict) and 'entity_type' in entity:
+                                    labels.add(entity['entity_type'])
+                    else:
+                        # Look for common text fields
+                        text_found = False
+                        for key in ['text', 'content', 'sentence', 'document', 'message', 'data']:
+                            if key in data and isinstance(data[key], str) and data[key].strip():
+                                texts.append(data[key].strip())
+                                text_found = True
+                                break
+                        
+                        # If no text field found, try to use the whole object as string
+                        if not text_found:
+                            # Look for any string value in the object
+                            for value in data.values():
+                                if isinstance(value, str) and len(value.strip()) > 5:
+                                    texts.append(value.strip())
                                     break
                                 
-            elif isinstance(data, dict):
-                # Single object - check for KDPII NER format first
-                if 'text' in data and 'entities' in data:
-                    texts.append(data['text'].strip())
-                    # Extract entity_types from entities array
-                    if isinstance(data['entities'], list):
-                        for entity in data['entities']:
-                            if isinstance(entity, dict) and 'entity_type' in entity:
-                                labels.add(entity['entity_type'])
-                # Other nested structures
-                elif 'texts' in data and isinstance(data['texts'], list):
-                    texts = [str(t).strip() for t in data['texts'] if str(t).strip()]
-                elif 'data' in data and isinstance(data['data'], list):
-                    for item in data['data']:
-                        if isinstance(item, str):
-                            texts.append(item.strip())
-                        elif isinstance(item, dict) and 'text' in item:
-                            texts.append(str(item['text']).strip())
-                else:
-                    # Look for text fields in the object
-                    for key in ['text', 'content', 'sentence', 'document']:
-                        if key in data and isinstance(data[key], str):
-                            texts.append(data[key].strip())
-                            break
-                            
-        elif file_extension == 'jsonl':
-            # JSON Lines format - each line is a separate JSON object
-            lines = content.strip().split('\n')
-            for line_num, line in enumerate(lines, 1):
-                line = line.strip()
-                if not line:
-                    continue
-                    
-                try:
-                    data = json.loads(line)
-                    
-                    if isinstance(data, str):
-                        texts.append(data.strip())
-                    elif isinstance(data, dict):
-                        # Check for KDPII NER format with entities
-                        if 'text' in data and 'entities' in data:
-                            texts.append(data['text'].strip())
-                            # Extract entity_types from entities array
-                            if isinstance(data['entities'], list):
-                                for entity in data['entities']:
-                                    if isinstance(entity, dict) and 'entity_type' in entity:
-                                        labels.add(entity['entity_type'])
-                        else:
-                            # Look for common text fields
-                            text_found = False
-                            for key in ['text', 'content', 'sentence', 'document', 'message', 'data']:
-                                if key in data and isinstance(data[key], str) and data[key].strip():
-                                    texts.append(data[key].strip())
-                                    text_found = True
-                                    break
-                            
-                            # If no text field found, try to use the whole object as string
-                            if not text_found:
-                                # Look for any string value in the object
-                                for value in data.values():
-                                    if isinstance(value, str) and len(value.strip()) > 5:
-                                        texts.append(value.strip())
-                                        break
-                                    
-                except json.JSONDecodeError as e:
-                    print(f"Warning: Invalid JSON on line {line_num}: {e}")
-                    continue
+            except json.JSONDecodeError as e:
+                print(f"Warning: Invalid JSON on line {line_num}: {e}")
+                continue
     
     except Exception as e:
-        raise ValueError(f"Error parsing {file_extension} file: {str(e)}")
+        raise ValueError(f"Error parsing JSONL file: {str(e)}")
     
     return texts, list(labels)
 
