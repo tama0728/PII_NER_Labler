@@ -1,0 +1,21 @@
+{
+  "timestamp": "2025-09-01T14:34:27.852404",
+  "summary": {
+    "total": 2,
+    "passed": 0,
+    "failed": 2,
+    "duration": 7.872790336608887
+  },
+  "results": {
+    "unit/test_ner_core.py": {
+      "success": false,
+      "returncode": 1,
+      "stderr": null
+    },
+    "unit/test_database.py": {
+      "success": false,
+      "returncode": 1,
+      "stderr": null
+    }
+  }
+}

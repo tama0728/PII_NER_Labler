@@ -1,0 +1,56 @@
+# KDPII NER Labeler Testing Dependencies
+# =====================================
+# 
+# Testing framework and utilities for comprehensive test coverage
+# Install with: pip install -r requirements-test.txt
+
+# Core Testing Framework
+pytest>=7.0.0
+pytest-cov>=4.0.0
+pytest-html>=3.1.0
+pytest-xdist>=3.0.0
+pytest-mock>=3.10.0
+pytest-timeout>=2.1.0
+
+# Web Testing
+playwright>=1.30.0
+selenium>=4.8.0
+
+# HTTP Testing  
+requests>=2.28.0
+requests-mock>=1.10.0
+
+# Database Testing
+sqlite3
+
+# Performance Testing
+pytest-benchmark>=4.0.0
+memory-profiler>=0.61.0
+
+# Code Quality
+coverage>=7.0.0
+pytest-flake8>=1.1.0
+pytest-mypy>=0.10.0
+
+# Mock and Fixtures
+factory-boy>=3.2.0
+faker>=18.0.0
+
+# Utilities
+python-dotenv>=1.0.0
+colorama>=0.4.6
+tabulate>=0.9.0
+
+# Optional: Development Dependencies
+# (uncomment if needed for advanced testing)
+# pytest-django>=4.5.0
+# pytest-flask>=1.2.0
+# hypothesis>=6.70.0
+# mutmut>=2.4.0
+
+# Platform-specific dependencies
+# Windows
+pywin32>=305; sys_platform=="win32"
+
+# Linux/macOS  
+psutil>=5.9.0; sys_platform!="win32"

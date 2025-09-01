@@ -3,7 +3,6 @@ User model for authentication and user management
 """
 
 from flask_sqlalchemy import SQLAlchemy
-from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 from backend.database import db
@@ -11,8 +10,8 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import String, DateTime, Boolean, Text
 from typing import Optional, List
 
-class User(UserMixin, db.Model):
-    """User model with authentication support"""
+class User(db.Model):
+    """User model for basic user information"""
     
     __tablename__ = 'users'
     
@@ -23,7 +22,6 @@ class User(UserMixin, db.Model):
     
     # Profile information
     full_name: Mapped[Optional[str]] = mapped_column(String(100))
-    role: Mapped[str] = mapped_column(String(20), default='annotator')  # admin, annotator, viewer
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     
     # Timestamps
@@ -43,17 +41,6 @@ class User(UserMixin, db.Model):
         """Check password against hash"""
         return check_password_hash(self.password_hash, password)
     
-    def is_admin(self) -> bool:
-        """Check if user is admin"""
-        return self.role == 'admin'
-    
-    def can_annotate(self) -> bool:
-        """Check if user can create annotations"""
-        return self.role in ['admin', 'annotator']
-    
-    def can_manage_projects(self) -> bool:
-        """Check if user can create and manage projects"""
-        return self.role in ['admin', 'annotator']
     
     def update_last_login(self) -> None:
         """Update last login timestamp"""
@@ -67,7 +54,6 @@ class User(UserMixin, db.Model):
             'username': self.username,
             'email': self.email,
             'full_name': self.full_name,
-            'role': self.role,
             'is_active': self.is_active,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'last_login': self.last_login.isoformat() if self.last_login else None,

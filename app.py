@@ -6,12 +6,11 @@ Main entry point combining ner_web_interface.py features with backend architectu
 
 from flask import Flask, render_template, request, jsonify, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager
 from backend.config import Config
 from backend.database import db
-from backend.auth import auth_bp
 from backend.api import api_bp
 import os
+from datetime import datetime
 
 # Import NER functionality (core feature)
 from ner_extractor import NERExtractor
@@ -28,22 +27,10 @@ def create_app(config_class=Config):
     # Initialize extensions
     db.init_app(app)
     
-    # Initialize Flask-Login
-    login_manager = LoginManager()
-    login_manager.init_app(app)
-    login_manager.login_view = 'auth.login'
-    login_manager.login_message = 'Please log in to access this page.'
-    
-    @login_manager.user_loader
-    def load_user(user_id):
-        from backend.models.user import User
-        return User.query.get(int(user_id))
-    
     # Register blueprints
     from backend.views import views_bp
     from backend.collaboration_api import collab_bp
     app.register_blueprint(views_bp)
-    app.register_blueprint(auth_bp, url_prefix='/auth')
     app.register_blueprint(api_bp, url_prefix='/api')
     app.register_blueprint(collab_bp, url_prefix='/collab')
     
@@ -53,6 +40,7 @@ def create_app(config_class=Config):
         print(f"NERExtractor initialized with {len(extractor.labels)} labels")
         app.ner_extractor = extractor  # Store in app context
     except Exception as e:
+        
         print(f"Error initializing NERExtractor: {e}")
         raise
 
@@ -274,14 +262,155 @@ def create_app(config_class=Config):
     def ner_delete_tag_original(label_id):
         return ner_delete_tag(label_id)
 
+    # File save endpoints
+    @app.route('/api/save-modified-file', methods=['POST'])
+    def save_modified_file():
+        """Save modified/preprocessed file to server"""
+        try:
+            data = request.json
+            filename = data.get('filename', 'modified_file.jsonl')
+            content = data.get('content', '')
+            
+            if not content:
+                return jsonify({'error': 'No content provided'}), 400
+            
+            # Create exports/modified directory if it doesn't exist
+            exports_dir = os.path.join(os.getcwd(), 'exports')
+            modified_dir = os.path.join(exports_dir, 'modified')
+            os.makedirs(modified_dir, exist_ok=True)
+            
+            # Generate unique filename with timestamp
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            base_name = filename.replace('.jsonl', '')
+            save_filename = f"{base_name}_modified_{timestamp}.jsonl"
+            file_path = os.path.join(modified_dir, save_filename)
+            
+            # Save file
+            with open(file_path, 'w', encoding='utf-8') as f:
+                f.write(content)
+            
+            return jsonify({
+                'success': True,
+                'filename': save_filename,
+                'filepath': file_path,
+                'message': f'수정된 파일이 서버에 저장되었습니다: {save_filename}'
+            })
+            
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+    
+    @app.route('/api/save-completed-file', methods=['POST'])
+    def save_completed_file():
+        """Save completed/labeled file to server"""
+        try:
+            data = request.json
+            filename = data.get('filename', 'completed_file.jsonl')
+            content = data.get('content', '')
+            
+            if not content:
+                return jsonify({'error': 'No content provided'}), 400
+            
+            # Create exports/completed directory if it doesn't exist
+            exports_dir = os.path.join(os.getcwd(), 'exports')
+            completed_dir = os.path.join(exports_dir, 'completed')
+            os.makedirs(completed_dir, exist_ok=True)
+            
+            # Generate unique filename with timestamp
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            base_name = filename.replace('.jsonl', '')
+            save_filename = f"{base_name}_completed_{timestamp}.jsonl"
+            file_path = os.path.join(completed_dir, save_filename)
+            
+            # Save file
+            with open(file_path, 'w', encoding='utf-8') as f:
+                f.write(content)
+            
+            return jsonify({
+                'success': True,
+                'filename': save_filename,
+                'filepath': file_path,
+                'message': f'완성된 파일이 서버에 저장되었습니다: {save_filename}'
+            })
+            
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+
+    # File management endpoints
+    @app.route('/api/saved-files')
+    def list_saved_files():
+        """List all saved files in exports directory"""
+        try:
+            exports_dir = os.path.join(os.getcwd(), 'exports')
+            files_info = {
+                'modified': [],
+                'completed': []
+            }
+            
+            # List modified files
+            modified_dir = os.path.join(exports_dir, 'modified')
+            if os.path.exists(modified_dir):
+                for filename in os.listdir(modified_dir):
+                    if filename.endswith('.jsonl'):
+                        file_path = os.path.join(modified_dir, filename)
+                        stat = os.stat(file_path)
+                        files_info['modified'].append({
+                            'filename': filename,
+                            'size': stat.st_size,
+                            'modified_time': datetime.fromtimestamp(stat.st_mtime).isoformat(),
+                            'type': 'modified'
+                        })
+            
+            # List completed files
+            completed_dir = os.path.join(exports_dir, 'completed')
+            if os.path.exists(completed_dir):
+                for filename in os.listdir(completed_dir):
+                    if filename.endswith('.jsonl'):
+                        file_path = os.path.join(completed_dir, filename)
+                        stat = os.stat(file_path)
+                        files_info['completed'].append({
+                            'filename': filename,
+                            'size': stat.st_size,
+                            'modified_time': datetime.fromtimestamp(stat.st_mtime).isoformat(),
+                            'type': 'completed'
+                        })
+            
+            # Sort by modification time (newest first)
+            files_info['modified'].sort(key=lambda x: x['modified_time'], reverse=True)
+            files_info['completed'].sort(key=lambda x: x['modified_time'], reverse=True)
+            
+            return jsonify(files_info)
+            
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+    
+    @app.route('/api/saved-files/<file_type>/<filename>')
+    def get_saved_file(file_type, filename):
+        """Get content of a saved file"""
+        try:
+            if file_type not in ['modified', 'completed']:
+                return jsonify({'error': 'Invalid file type'}), 400
+            
+            exports_dir = os.path.join(os.getcwd(), 'exports')
+            file_path = os.path.join(exports_dir, file_type, filename)
+            
+            if not os.path.exists(file_path):
+                return jsonify({'error': 'File not found'}), 404
+            
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            return jsonify({
+                'filename': filename,
+                'content': content,
+                'type': file_type
+            })
+            
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+
     # Create database tables
     with app.app_context():
         db.create_all()
-        
-        # Create default admin user if not exists
-        from backend.services.user_service import UserService
-        user_service = UserService()
-        user_service.create_default_admin()
     
     return app
 

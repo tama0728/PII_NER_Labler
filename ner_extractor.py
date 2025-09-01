@@ -71,7 +71,7 @@ class NERExtractor:
     ]
     
     def __init__(self, labels: Optional[List[NERLabel]] = None):
-        self.labels = labels or self.DEFAULT_LABELS
+        self.labels = labels or list(self.DEFAULT_LABELS)  # Create new list instance
         self.tasks: Dict[str, NERTask] = {}
     
     def get_label_config_xml(self) -> str:
