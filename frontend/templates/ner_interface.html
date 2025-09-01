@@ -22,8 +22,8 @@
         .container {
             max-width: 1400px;
             margin: 0 auto;
-            padding: 16px;
-            height: 100vh;
+            padding: 8px;
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
         }
@@ -80,17 +80,12 @@
             margin-bottom: 16px;
             box-shadow: 2px 2px 8px #AAA;
             border: 1px solid #e8e8e8;
-            display: flex;
-            gap: 12px;
-            align-items: center;
-            flex-wrap: wrap;
         }
         
         .annotation-interface {
             display: flex;
             gap: 16px;
-            flex: 1;
-            min-height: 0;
+            min-height: auto;
         }
         
         .labels-panel {
@@ -100,7 +95,7 @@
             padding: 16px;
             box-shadow: 2px 2px 8px #AAA;
             border: 1px solid #2c3566;
-            overflow-y: auto;
+            height: auto;
         }
         
         .labels-panel h3 {
@@ -120,7 +115,7 @@
             border: 1px solid #e8e8e8;
             display: flex;
             flex-direction: column;
-            min-height: 0;
+            min-height: auto;
         }
         
         .text-content {
@@ -130,8 +125,8 @@
             user-select: text;
             white-space: pre-wrap;
             word-wrap: break-word;
-            flex: 1;
-            overflow-y: auto;
+            min-height: 400px;
+            height: auto;
             font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif;
         }
         
@@ -142,7 +137,7 @@
             padding: 16px;
             box-shadow: 2px 2px 8px #AAA;
             border: 1px solid #e8e8e8;
-            overflow-y: auto;
+            height: auto;
         }
         
         .entity-details-panel h3 {
@@ -520,8 +515,8 @@
         }
         
         .textarea {
-            flex: 1;
-            min-height: 80px;
+            width: 100%;
+            min-height: 40px;
             padding: 12px;
             border: 1px solid #ddd;
             border-radius: 3px;
@@ -529,6 +524,7 @@
             font-size: 13px;
             resize: none;
             box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+            overflow-y: hidden;
         }
         
         .textarea:focus {
@@ -955,11 +951,9 @@
         }
         
         .tasks-list {
-            flex: 1;
-            overflow-y: auto;
             padding: 8px;
             min-height: 200px;
-            max-height: 400px;
+            height: auto;
             transition: opacity 0.3s ease;
         }
         
@@ -1035,11 +1029,17 @@
         </div>
         
         <div class="controls">
-            <textarea class="textarea" id="textInput" placeholder="Enter text to annotate..."></textarea>
-            <button class="btn primary" onclick="loadText()">Load Text</button>
-            <button class="btn" onclick="showUploadModal()">📁 Upload Files</button>
-            <button class="btn" onclick="clearAnnotations()">Clear</button>
-            <button class="btn" onclick="exportAnnotations()">Export</button>
+            <div style="width: 100%; margin-bottom: 12px;">
+                <textarea class="textarea" id="textInput" placeholder="Enter text to annotate..." oninput="autoResize(this)"></textarea>
+            </div>
+            <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                <button class="btn primary" onclick="loadText()">Load Text</button>
+                <button class="btn" onclick="showUploadModal()">📁 Upload Files</button>
+                <button class="btn" onclick="showSavedFilesModal()">💾 View Saved Files</button>
+                <button class="btn" onclick="clearAnnotations()">Clear</button>
+                <button class="btn primary" onclick="saveCurrentTask()" id="saveTaskBtn" style="display: none;">💾 Save Task</button>
+                <button class="btn" onclick="exportAnnotations()">Export</button>
+            </div>
         </div>
         
         <div class="annotation-interface">
@@ -1069,7 +1069,6 @@
                         data-label="{{ label.value }}"
                         data-label-id="{{ label.value }}"
                         onclick="selectLabel('{{ label.value }}')"
-                        ondblclick="openEditLabelModal('{{ label.value }}', true)"
                         title="Click to select, Double-click to edit">
                     <div class="label-content">
                         <span class="label-text">{{ label.value }}</span>
@@ -1088,7 +1087,7 @@
             </div>
             
             <div class="text-panel">
-                <div class="text-content" id="textContent" onmouseup="handleTextSelection()">
+                <div class="text-content" id="textContent" onmouseup="handleTextSelection(event)">
                     Click "Load Text" to start annotating...
                 </div>
             </div>
@@ -1537,17 +1536,83 @@
                 const data = await response.json();
                 currentTaskId = data.task_id;
                 currentText = text;
+                
+                // Clear existing annotations (no auto-synchronization)
                 annotations = [];
                 
                 document.getElementById('textContent').textContent = text;
+                
+                // Auto-resize content areas after text is loaded
+                setTimeout(autoResizeContentAreas, 50);
+                
+                // Show auto-save success message
+                alert('✅ 텍스트가 로드되고 자동저장되었습니다!');
+                
                 updateStatistics();
             } catch (error) {
                 alert('Error loading text: ' + error.message);
             }
         }
         
+        // Save current task annotations
+        function saveCurrentTask() {
+            if (!currentTask || !annotations || annotations.length === 0) {
+                alert('저장할 어노테이션이 없습니다.');
+                return;
+            }
+            
+            try {
+                // Mark task as saved
+                currentTask.saved = true;
+                currentTask.annotations = [...annotations];
+                currentTask.savedAt = new Date().toISOString();
+                
+                // Update task in global array
+                const tasks = window.uploadedTasks || [];
+                const taskIndex = tasks.findIndex(t => t.id === currentTask.id);
+                if (taskIndex !== -1) {
+                    console.log('=== SAVE TASK DEBUG ===');
+                    console.log('Before save - task annotations:', tasks[taskIndex].annotations);
+                    tasks[taskIndex] = { ...currentTask };
+                    console.log('After save - task annotations:', tasks[taskIndex].annotations);
+                    console.log('Saved task:', tasks[taskIndex]);
+                }
+                
+                // Update UI
+                updateTasksList();
+                
+                // Hide save button
+                document.getElementById('saveTaskBtn').style.display = 'none';
+                
+                // Show success message
+                alert(`✅ Task "${currentTask.filename} #${currentTask.index}" 저장 완료!\n어노테이션 ${annotations.length}개가 저장되었습니다.`);
+                
+                console.log('Task saved successfully:', currentTask);
+                
+            } catch (error) {
+                console.error('Error saving task:', error);
+                alert('Task 저장 중 오류가 발생했습니다: ' + error.message);
+            }
+        }
+        
+        // Show save button when task has annotations
+        function showSaveButtonIfNeeded() {
+            const saveBtn = document.getElementById('saveTaskBtn');
+            if (currentTask && annotations && annotations.length > 0) {
+                saveBtn.style.display = 'inline-block';
+            } else {
+                saveBtn.style.display = 'none';
+            }
+        }
+        
         // Handle text selection
-        function handleTextSelection() {
+        function handleTextSelection(event) {
+            // Prevent double-click annotation creation
+            if (event && event.detail === 2) {
+                window.getSelection().removeAllRanges();
+                return;
+            }
+            
             if (!selectedLabel || !currentTaskId) return;
             
             const selection = window.getSelection();
@@ -1583,13 +1648,22 @@
                 const selectedText = currentText.substring(start, end);
                 
                 if (selectedText.trim()) {
+                    // Trim whitespace and recalculate positions
+                    const trimmedText = selectedText.trim();
+                    const leadingWhitespace = selectedText.length - selectedText.trimStart().length;
+                    const trailingWhitespace = selectedText.length - selectedText.trimEnd().length;
+                    
+                    // Adjust start and end positions for trimmed text
+                    const trimmedStart = start + leadingWhitespace;
+                    const trimmedEnd = end - trailingWhitespace;
+                    
                     // Check for overlapping annotations (optional warning)
-                    const overlapping = findOverlappingAnnotations(start, end);
+                    const overlapping = findOverlappingAnnotations(trimmedStart, trimmedEnd);
                     if (overlapping.length > 0) {
                         console.log('Creating overlapping annotation with:', overlapping.map(ann => ann.labels).flat());
                     }
                     
-                    addAnnotation(start, end, selectedText, [selectedLabel]);
+                    addAnnotation(trimmedStart, trimmedEnd, trimmedText, [selectedLabel]);
                 }
             } catch (error) {
                 console.error('Error handling text selection:', error);
@@ -1718,14 +1792,14 @@
                     entity_id: entityId
                 };
                 
-                // 현재 태스크의 annotations 배열에 추가
+                // 전역 annotations 배열에만 추가 (수동 라벨링 전용)
+                annotations.push(newAnnotation);
+                
+                // currentTask.annotations도 수동 어노테이션만 유지
                 if (!currentTask.annotations) {
                     currentTask.annotations = [];
                 }
-                currentTask.annotations.push(newAnnotation);
-                
-                // 전역 annotations 배열 업데이트 (중복 방지를 위해 태스크 배열로 동기화)
-                annotations = currentTask.annotations;
+                currentTask.annotations = [...annotations];
                 
                 // 어노테이션을 시작 위치순으로 정렬 (렌더링 최적화)
                 annotations.sort((a, b) => {
@@ -1733,14 +1807,12 @@
                     return b.end - a.end; // 같은 시작점이면 긴 것 먼저
                 });
                 
-                // 현재 태스크의 annotations도 정렬
-                currentTask.annotations.sort((a, b) => {
-                    if (a.start !== b.start) return a.start - b.start;
-                    return b.end - a.end;
-                });
+                // Update currentTask with sorted annotations
+                currentTask.annotations = [...annotations];
                 
                 renderAnnotations();
                 updateStatistics();
+                showSaveButtonIfNeeded();
                 
                 console.log('Annotation added successfully:', newAnnotation);
             } catch (error) {
@@ -1907,7 +1979,7 @@
         // Export annotations
         async function exportAnnotations() {
             try {
-                // Use client-side data (uploadedTasks) instead of API
+                // Use client-side data (uploadedTasks) but only saved tasks
                 const allTasks = window.uploadedTasks;
                 
                 if (!allTasks || allTasks.length === 0) {
@@ -1915,10 +1987,24 @@
                     return;
                 }
                 
-                // Convert all tasks to JSONL format
+                // Filter only saved tasks
+                const savedTasks = allTasks.filter(task => task.saved === true);
+                
+                if (savedTasks.length === 0) {
+                    alert('저장된 태스크가 없습니다. 각 태스크에서 "Save Task" 버튼을 먼저 클릭해주세요.');
+                    return;
+                }
+                
+                const unsavedCount = allTasks.length - savedTasks.length;
+                if (unsavedCount > 0) {
+                    const proceed = confirm(`총 ${allTasks.length}개 태스크 중 ${savedTasks.length}개만 저장되었습니다.\n저장되지 않은 ${unsavedCount}개 태스크는 내보내기에서 제외됩니다.\n\n계속하시겠습니까?`);
+                    if (!proceed) return;
+                }
+                
+                // Convert saved tasks to JSONL format
                 let jsonlContent = '';
                 
-                allTasks.forEach((task, index) => {
+                savedTasks.forEach((task, index) => {
                     // Create JSONL line for each task (match original structure)
                     const jsonlLine = {
                         metadata: task.metadata && task.metadata.metadata ? task.metadata.metadata : (task.metadata || {}),
@@ -1934,29 +2020,77 @@
                                 entity_type: annotation.labels && annotation.labels[0] ? annotation.labels[0] : '',
                                 start_offset: annotation.start,
                                 end_offset: annotation.end,
-                                span_id: annotation.span_id || '',
-                                entity_id: annotation.entity_id || '',
-                                annotator: annotation.annotator || '',
-                                identifier_type: annotation.identifier_type || ''
+                                span_id: '', // Always empty string to match original
+                                entity_id: '', // Always empty string to match original
+                                annotator: '', // Always empty string to match original
+                                identifier_type: '' // Always empty string to match original
                             });
                         });
                     }
                     
-                    jsonlContent += JSON.stringify(jsonlLine) + '\n';
+                    // Custom replacer to ensure turn_cnt is formatted as float with .0
+                    const replacer = (key, value) => {
+                        if (key === 'turn_cnt' && typeof value === 'number' && Number.isInteger(value)) {
+                            // Convert integer to string with .0 suffix
+                            return value.toFixed(1);
+                        }
+                        return value;
+                    };
+                    
+                    // Stringify and fix turn_cnt format to match original
+                    let jsonString = JSON.stringify(jsonlLine);
+                    // Replace turn_cnt integer values with float format
+                    if (jsonlLine.metadata && jsonlLine.metadata.provenance && typeof jsonlLine.metadata.provenance.turn_cnt === 'number') {
+                        const turnCnt = jsonlLine.metadata.provenance.turn_cnt;
+                        if (Number.isInteger(turnCnt)) {
+                            jsonString = jsonString.replace(`"turn_cnt":${turnCnt}`, `"turn_cnt":${turnCnt}.0`);
+                        }
+                    }
+                    
+                    jsonlContent += jsonString + '\n';
                 });
                 
-                // Generate filename based on first task's original filename or use default
+                // Generate filename based on first saved task's original filename or use default
                 let filename = 'annotations_completed.jsonl';
-                const firstTask = allTasks[0];
+                const firstTask = savedTasks[0];
                 if (firstTask && firstTask.metadata && firstTask.metadata.filename) {
                     const originalFilename = firstTask.metadata.filename;
                     const nameWithoutExt = originalFilename.replace(/\.[^/.]+$/, "");
                     filename = `${nameWithoutExt}_completed.jsonl`;
                 }
                 
-                downloadFile(filename, jsonlContent);
+                // Save to server instead of client download
+                const response = await fetch('/api/save-completed-file', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        filename: filename,
+                        content: jsonlContent
+                    })
+                });
                 
-                alert(`${allTasks.length}개 태스크가 ${filename} 파일로 내보내기되었습니다.`);
+                const result = await response.json();
+                if (result.success) {
+                    // Show success message
+                    alert(`✅ 저장된 ${savedTasks.length}개 태스크가 서버에 저장되었습니다!
+📁 파일명: ${result.filename}`);
+                    
+                    // Ask user if they want to reset the workspace for next work
+                    const shouldReset = confirm(`🔄 내보내기가 완료되었습니다!
+
+다음 작업을 위해 워크스페이스를 초기화하시겠습니까?
+
+⚠️ 초기화하면 현재 로드된 모든 태스크와 어노테이션이 삭제됩니다.
+(이미 저장된 파일은 안전합니다)`);
+                    
+                    if (shouldReset) {
+                        resetWorkspace();
+                    }
+                } else {
+                    throw new Error(result.error || '서버 저장 실패');
+                }
                 
             } catch (error) {
                 console.error('Export error:', error);
@@ -1964,6 +2098,91 @@
             }
         }
         
+        // Reset workspace to initial state for next work
+        function resetWorkspace() {
+            try {
+                // Clear all data
+                window.uploadedTasks = [];
+                annotations = [];
+                currentTask = null;
+                currentTaskId = null;
+                selectedLabel = null;
+                
+                // Reset global state variables
+                nextSpanId = 1;
+                window.currentTaskLabels = [];
+                window.originalFileData = null;
+                window.lastSavedModifiedFile = null;
+                
+                // Clear UI elements
+                // Reset tasks list
+                updateTasksList();
+                
+                // Clear text input and content
+                const textInput = document.getElementById('textInput');
+                if (textInput) {
+                    textInput.value = '';
+                    autoResize(textInput);
+                }
+                
+                // Clear text content display
+                const textContent = document.getElementById('textContent');
+                if (textContent) {
+                    textContent.innerHTML = '';
+                }
+                
+                // Clear metadata field
+                const metadataField = document.getElementById('metadata');
+                if (metadataField) {
+                    metadataField.value = '';
+                }
+                
+                // Reset labels panel - remove all label buttons
+                const labelContainer = document.querySelector('.labels-panel');
+                if (labelContainer) {
+                    const existingLabels = labelContainer.querySelectorAll('.label-item');
+                    existingLabels.forEach(label => label.remove());
+                }
+                
+                // Clear statistics
+                const statsDiv = document.getElementById('statistics');
+                if (statsDiv) {
+                    statsDiv.style.display = 'none';
+                }
+                
+                // Hide save button
+                const saveBtn = document.getElementById('saveTaskBtn');
+                if (saveBtn) {
+                    saveBtn.style.display = 'none';
+                }
+                
+                // Hide preprocessing controls if visible
+                hidePreprocessingControls();
+                
+                // Reset any modal states
+                const uploadModal = document.getElementById('uploadModal');
+                if (uploadModal) {
+                    uploadModal.style.display = 'none';
+                }
+                
+                const savedFilesModal = document.getElementById('savedFilesModal');
+                if (savedFilesModal) {
+                    savedFilesModal.style.display = 'none';
+                }
+                
+                // Show success message
+                alert('🔄 워크스페이스가 초기화되었습니다!
+
+새로운 작업을 시작할 수 있습니다.');
+                
+                console.log('✅ Workspace reset completed successfully');
+                
+            } catch (error) {
+                console.error('Error resetting workspace:', error);
+                alert('워크스페이스 초기화 중 오류가 발생했습니다: ' + error.message);
+            }
+        }
+
         // Download file
         function downloadFile(filename, content) {
             const blob = new Blob([content], { type: 'text/plain' });
@@ -2298,7 +2517,7 @@
                 labelButton.setAttribute('data-label', updatedLabel.value);
                 labelButton.style.backgroundColor = updatedLabel.background;
                 labelButton.onclick = function() { selectLabel(updatedLabel.value); };
-                labelButton.ondblclick = function() { openEditLabelModal(labelId); };
+                
                 
                 const hotkeySpan = updatedLabel.hotkey ? `<span class="hotkey">${updatedLabel.hotkey}</span>` : '';
                 
@@ -2451,7 +2670,7 @@
             labelButton.setAttribute('data-label', label.value);
             labelButton.setAttribute('data-label-id', label.id);
             labelButton.onclick = function() { selectLabel(label.value); };
-            labelButton.ondblclick = function() { openEditLabelModal(label.id); };
+            
             labelButton.title = 'Click to select label for annotation';
             
             const hotkeySpan = label.hotkey ? `<span class="hotkey">${label.hotkey}</span>` : '';
@@ -2584,12 +2803,13 @@
                 spanIdEl.value = annotation.span_id || '';
                 entityIdEl.value = annotation.entity_id || '';
                 
-                // JSON 상세정보 업데이트
+                // JSON 상세정보 업데이트 - 실제 텍스트에서 추출
+                const actualText = currentText ? currentText.substring(annotation.start || 0, annotation.end || 0) : (annotation.text || '');
                 const jsonData = {
-                    text: annotation.text || '',
+                    text: actualText,
                     labels: annotation.labels || [],
-                    start: annotation.start || 0,
-                    end: annotation.end || 0,
+                    start_offset: annotation.start || 0,
+                    end_offset: annotation.end || 0,
                     span_id: annotation.span_id || '',
                     entity_id: annotation.entity_id || '',
                     identifier_type: annotation.identifier_type || 'default',
@@ -2804,16 +3024,16 @@
                 // 기본 필드 검증
                 if (typeof parsedData.text !== 'string' ||
                     !Array.isArray(parsedData.labels) ||
-                    typeof parsedData.start !== 'number' ||
-                    typeof parsedData.end !== 'number') {
+                    typeof parsedData.start_offset !== 'number' ||
+                    typeof parsedData.end_offset !== 'number') {
                     throw new Error('필수 필드가 누락되었거나 잘못된 형식입니다.');
                 }
                 
                 // annotation 객체 업데이트
                 selectedAnnotation.text = parsedData.text;
                 selectedAnnotation.labels = parsedData.labels;
-                selectedAnnotation.start = parsedData.start;
-                selectedAnnotation.end = parsedData.end;
+                selectedAnnotation.start = parsedData.start_offset;
+                selectedAnnotation.end = parsedData.end_offset;
                 selectedAnnotation.span_id = parsedData.span_id || '';
                 selectedAnnotation.entity_id = parsedData.entity_id || '';
                 selectedAnnotation.identifier_type = parsedData.identifier_type || 'default';
@@ -2999,8 +3219,35 @@
             const files = fileInput.files;
             const uploadArea = document.getElementById('uploadArea');
             
+            // 파일 선택 여부 체크
             if (files.length === 0) {
-                alert('Please select files first');
+                alert('먼저 파일을 선택해주세요.');
+                // 오류 메시지 후 파일 선택 대화상자 열기
+                fileInput.click();
+                return;
+            }
+            
+            // 파일 형식 검증 - JSONL만 허용
+            let hasInvalidFormat = false;
+            let invalidFileName = '';
+            
+            for (let file of files) {
+                const fileName = file.name.toLowerCase();
+                const fileExtension = fileName.substring(fileName.lastIndexOf('.'));
+                
+                if (fileExtension !== '.jsonl') {
+                    hasInvalidFormat = true;
+                    invalidFileName = file.name;
+                    break;
+                }
+            }
+            
+            if (hasInvalidFormat) {
+                alert(`적절하지 않은 파일 형식입니다.
+파일명: ${invalidFileName}
+지원 형식: .jsonl만 가능합니다.`);
+                // Clear the file input to reset state
+                fileInput.value = '';
                 return;
             }
             
@@ -3020,10 +3267,10 @@
                 const workspaceId = '{{ workspace_id }}';
                 let uploadUrl = `/collab/workspaces/${workspaceId}/upload/batch`;
                 
-                // If no workspace_id, fallback to basic task creation
+                // If no workspace_id, load file for preprocessing
                 if (!workspaceId || workspaceId === 'None') {
-                    // Parse files and create tasks locally
-                    await processFilesLocally(files);
+                    // Load file content into text input for preprocessing
+                    await loadFileForPreprocessing(files);
                     hideUploadModal();
                     resetUploadArea();
                     return;
@@ -3151,6 +3398,342 @@
                 const labelInfo = allLabels.size > 0 ? `\n🏷️ ${allLabels.size} labels auto-created` : '';
                 alert(`✅ Files processed!\n📝 ${allTasks.length} tasks created${labelInfo}\nFirst task loaded for annotation.`);
             }
+        }
+        
+        // Load file content for preprocessing phase
+        async function loadFileForPreprocessing(files) {
+            if (files.length === 0) return;
+            
+            try {
+                // For now, handle only the first file
+                const file = files[0];
+                const content = await file.text();
+                const result = parseFileContent(content, file.name);
+                
+                // Store original file data globally for later processing
+                window.originalFileData = {
+                    filename: file.name,
+                    content: content,
+                    parsedResult: result
+                };
+                
+                // Display combined text in text input for preprocessing
+                const textInput = document.getElementById('textInput');
+                const combinedText = result.texts.join('\n\n--- Task Separator ---\n\n');
+                textInput.value = combinedText;
+                autoResize(textInput);
+                
+                // Show processing button
+                showPreprocessingControls();
+                
+                alert(`📁 파일 로드 완료!\n파일: ${file.name}\n텍스트 ${result.texts.length}개 로드됨\n\n텍스트를 편집한 후 "처리하기" 버튼을 클릭하세요.`);
+                
+            } catch (error) {
+                console.error('Error loading file for preprocessing:', error);
+                alert('파일 로드 중 오류가 발생했습니다: ' + error.message);
+            }
+        }
+        
+        // Show preprocessing controls
+        function showPreprocessingControls() {
+            // Create process button if it doesn't exist
+            let processBtn = document.getElementById('processBtn');
+            if (!processBtn) {
+                processBtn = document.createElement('button');
+                processBtn.id = 'processBtn';
+                processBtn.className = 'btn primary';
+                processBtn.textContent = '처리하기';
+                processBtn.onclick = processPreprocessedText;
+                
+                // Insert after Load Text button
+                const loadTextBtn = document.querySelector('.controls .btn.primary');
+                loadTextBtn.parentNode.insertBefore(processBtn, loadTextBtn.nextSibling);
+            }
+            processBtn.style.display = 'inline-block';
+            
+            // Hide Load Text button during preprocessing
+            const loadTextBtn = document.querySelector('.controls .btn.primary');
+            if (loadTextBtn && loadTextBtn.textContent.includes('Load Text')) {
+                loadTextBtn.style.display = 'none';
+            }
+        }
+        
+        // Hide preprocessing controls
+        function hidePreprocessingControls() {
+            const processBtn = document.getElementById('processBtn');
+            if (processBtn) {
+                processBtn.style.display = 'none';
+            }
+            
+            // Show Load Text button again
+            const loadTextBtn = document.querySelector('.controls .btn.primary');
+            if (loadTextBtn && loadTextBtn.textContent.includes('Load Text')) {
+                loadTextBtn.style.display = 'inline-block';
+            }
+        }
+        
+        // Process preprocessed text with annotation synchronization
+        async function processPreprocessedText() {
+            const textInput = document.getElementById('textInput');
+            const editedText = textInput.value.trim();
+            
+            if (!editedText || !window.originalFileData) {
+                alert('편집할 텍스트가 없습니다.');
+                return;
+            }
+            
+            try {
+                // Split edited text back into individual texts
+                const editedTexts = editedText.split('\n\n--- Task Separator ---\n\n');
+                const originalData = window.originalFileData.parsedResult;
+                
+                // Auto-save modified content as JSONL file before processing
+                await saveModifiedContent(editedTexts, originalData);
+                
+                // Synchronize annotations with text changes
+                const synchronizedData = synchronizeAnnotationsWithText(
+                    originalData.texts,
+                    editedTexts,
+                    originalData.textAnnotations || [],
+                    originalData.textLabels || [],
+                    originalData.textMetadata || []
+                );
+                
+                // Create tasks with synchronized data
+                const allTasks = [];
+                synchronizedData.texts.forEach((textContent, index) => {
+                    allTasks.push({
+                        id: `task_${Date.now()}_${index}`,
+                        text: textContent,
+                        filename: window.originalFileData.filename,
+                        index: index + 1,
+                        annotations: synchronizedData.annotations[index] || [],
+                        labels: synchronizedData.labels[index] || [],
+                        metadata: synchronizedData.metadata[index] || null
+                    });
+                });
+                
+                // Add tasks and update UI
+                if (allTasks.length > 0) {
+                    window.uploadedTasks = (window.uploadedTasks || []).concat(allTasks);
+                    updateTasksList();
+                    selectTask(allTasks[0].id);
+                    
+                    alert(`✅ 수정된 파일이 저장되고 전처리가 완료되었습니다!\n📝 ${allTasks.length}개 태스크 생성됨\n첫 번째 태스크가 로드되었습니다.`);
+                }
+                
+                // Clean up
+                hidePreprocessingControls();
+                textInput.value = '';
+                window.originalFileData = null;
+                
+            } catch (error) {
+                console.error('Error processing preprocessed text:', error);
+                alert('전처리 중 오류가 발생했습니다: ' + error.message);
+            }
+        }
+        
+        // Save modified content as JSONL file to server
+        async function saveModifiedContent(editedTexts, originalData) {
+            try {
+                // Create JSONL content with modified text
+                let jsonlContent = '';
+                
+                editedTexts.forEach((textContent, index) => {
+                    const originalMetadata = originalData.textMetadata ? originalData.textMetadata[index] : null;
+                    const originalAnnotations = originalData.textAnnotations ? originalData.textAnnotations[index] : [];
+                    
+                    // Create JSONL line for each modified text
+                    const jsonlLine = {
+                        text: textContent.trim(),
+                        entities: []
+                    };
+                    
+                    // Add original metadata if available
+                    if (originalMetadata && Object.keys(originalMetadata).length > 0) {
+                        Object.keys(originalMetadata).forEach(key => {
+                            jsonlLine[key] = originalMetadata[key];
+                        });
+                    }
+                    
+                    // Add original entities/annotations if available (from preprocessing)
+                    if (originalAnnotations && Array.isArray(originalAnnotations)) {
+                        originalAnnotations.forEach(annotation => {
+                            // Check if annotation is still valid for the modified text
+                            if (annotation.start < textContent.length && annotation.end <= textContent.length) {
+                                jsonlLine.entities.push({
+                                    span_text: textContent.substring(annotation.start, annotation.end),
+                                    entity_type: annotation.labels && annotation.labels[0] ? annotation.labels[0] : '',
+                                    start_offset: annotation.start,
+                                    end_offset: annotation.end,
+                                    span_id: annotation.span_id || '',
+                                    entity_id: annotation.entity_id || '',
+                                    annotator: annotation.annotator || '',
+                                    identifier_type: annotation.identifier_type || ''
+                                });
+                            }
+                        });
+                    }
+                    
+                    jsonlContent += JSON.stringify(jsonlLine) + '\n';
+                });
+                
+                // Save to server instead of client download
+                const originalFilename = window.originalFileData.filename;
+                const response = await fetch('/api/save-modified-file', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        filename: originalFilename,
+                        content: jsonlContent
+                    })
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    console.log(`Modified content saved to server: ${result.filename}`);
+                    // Store saved filename for reference
+                    window.lastSavedModifiedFile = result.filename;
+                } else {
+                    throw new Error(result.error || '서버 저장 실패');
+                }
+                
+            } catch (error) {
+                console.error('Error saving modified content:', error);
+                throw new Error('수정된 파일 저장 중 오류가 발생했습니다: ' + error.message);
+            }
+        }
+        
+        // Synchronize annotations with text changes
+        function synchronizeAnnotationsWithText(originalTexts, editedTexts, originalAnnotations, originalLabels, originalMetadata) {
+            const result = {
+                texts: [],
+                annotations: [],
+                labels: [],
+                metadata: []
+            };
+            
+            editedTexts.forEach((editedText, textIndex) => {
+                const originalText = originalTexts[textIndex] || '';
+                const textAnnotations = originalAnnotations[textIndex] || [];
+                const textLabels = originalLabels[textIndex] || [];
+                const textMetadata = originalMetadata[textIndex] || null;
+                
+                result.texts.push(editedText.trim());
+                result.labels.push(textLabels);
+                result.metadata.push(textMetadata);
+                
+                if (textAnnotations.length === 0) {
+                    // No annotations to synchronize
+                    result.annotations.push([]);
+                    return;
+                }
+                
+                // Synchronize annotations for this text
+                const synchronizedAnnotations = synchronizeTextAnnotations(
+                    originalText,
+                    editedText.trim(),
+                    textAnnotations
+                );
+                
+                result.annotations.push(synchronizedAnnotations);
+            });
+            
+            return result;
+        }
+        
+        // Synchronize annotations for a single text
+        function synchronizeTextAnnotations(originalText, editedText, annotations) {
+            if (!annotations || annotations.length === 0) {
+                return [];
+            }
+            
+            const synchronizedAnnotations = [];
+            let nextSpanId = 1;
+            let nextEntityId = 1;
+            const entityIdMap = new Map(); // 원본 entity_id -> 새 entity_id 매핑
+            
+            annotations.forEach((annotation, index) => {
+                const originalStart = annotation.start_offset || annotation.start || 0;
+                const originalEnd = annotation.end_offset || annotation.end || 0;
+                const originalAnnotationText = originalText.substring(originalStart, originalEnd);
+                
+                // Find the annotation text in the edited text
+                const newPosition = findTextPosition(editedText, originalAnnotationText, originalStart);
+                
+                if (newPosition !== null) {
+                    // Update entity_id mapping
+                    const originalEntityId = annotation.entity_id || annotation.span_id || (index + 1);
+                    if (!entityIdMap.has(originalEntityId)) {
+                        entityIdMap.set(originalEntityId, nextEntityId++);
+                    }
+                    
+                    const newAnnotation = {
+                        ...annotation,
+                        start: newPosition.start,
+                        end: newPosition.end,
+                        start_offset: newPosition.start,
+                        end_offset: newPosition.end,
+                        text: newPosition.text, // Update text field
+                        span_id: nextSpanId++,
+                        entity_id: entityIdMap.get(originalEntityId)
+                    };
+                    
+                    synchronizedAnnotations.push(newAnnotation);
+                } else {
+                    // Annotation text not found in edited text - skip it
+                    console.warn(`Annotation "${originalAnnotationText}" not found in edited text, skipping.`);
+                }
+            });
+            
+            return synchronizedAnnotations;
+        }
+        
+        // Find text position in edited text with fuzzy matching
+        function findTextPosition(editedText, searchText, hintPosition) {
+            // Try exact match first
+            const exactIndex = editedText.indexOf(searchText);
+            if (exactIndex !== -1) {
+                return {
+                    start: exactIndex,
+                    end: exactIndex + searchText.length,
+                    text: searchText
+                };
+            }
+            
+            // Try fuzzy matching around hint position
+            const searchRadius = 50;
+            const startSearch = Math.max(0, hintPosition - searchRadius);
+            const endSearch = Math.min(editedText.length, hintPosition + searchRadius + searchText.length);
+            const searchArea = editedText.substring(startSearch, endSearch);
+            
+            const fuzzyIndex = searchArea.indexOf(searchText);
+            if (fuzzyIndex !== -1) {
+                const actualStart = startSearch + fuzzyIndex;
+                return {
+                    start: actualStart,
+                    end: actualStart + searchText.length,
+                    text: searchText
+                };
+            }
+            
+            // Try partial matching for single words
+            const words = searchText.split(/\s+/);
+            if (words.length === 1) {
+                const word = words[0];
+                const wordIndex = editedText.indexOf(word);
+                if (wordIndex !== -1) {
+                    return {
+                        start: wordIndex,
+                        end: wordIndex + word.length,
+                        text: word
+                    };
+                }
+            }
+            
+            return null; // Not found
         }
         
         function parseFileContent(content, filename) {
@@ -3305,11 +3888,22 @@
                     </div>
                 </div>
             `).join('');
+            
+            // Auto-resize content areas after tasks are updated
+            setTimeout(autoResizeContentAreas, 50);
         }
         
         function selectTask(taskId) {
             const tasks = window.uploadedTasks || [];
             const task = tasks.find(t => t.id === taskId);
+            
+            console.log('=== SELECT TASK DEBUG ===');
+            console.log('TaskId:', taskId);
+            console.log('Found task:', task);
+            console.log('Task has annotations?', task?.annotations);
+            console.log('Annotations count:', task?.annotations?.length);
+            console.log('Task saved status:', task?.saved);
+            console.log('All tasks:', tasks);
             
             if (!task) return;
             
@@ -3325,12 +3919,19 @@
             });
             document.querySelector(`[data-task-id="${taskId}"]`).classList.add('active');
             
-            // Load task text
+            // Load task text and set current task
             currentTask = task;
-            currentTaskId = task.id; // currentTaskId 설정 추가
-            currentText = task.text; // 직접 설정
-            document.getElementById('textInput').value = task.text;
-            // loadText() 호출하지 않음 - API 호출 불필요
+            currentTaskId = task.id;
+            currentText = task.text;
+            
+            // Set text in input field
+            const textInput = document.getElementById('textInput');
+            if (textInput) {
+                textInput.value = task.text;
+                autoResize(textInput);
+            }
+            
+            // DON'T set textContent here - renderAnnotations will handle it
             
             // Update metadata field
             const metadataField = document.getElementById('metadata');
@@ -3494,29 +4095,26 @@
                 }
             }
             
-            // Load existing annotations for this task
-            annotations = task.annotations || [];
-            console.log('Loaded annotations:', annotations);
+            // Load saved annotations if they exist
+            if (task.annotations && Array.isArray(task.annotations) && task.annotations.length > 0) {
+                annotations = [...task.annotations];
+                console.log('✅ Successfully loaded saved annotations:', annotations.length);
+                console.log('✅ Annotations content:', JSON.stringify(annotations));
+            } else {
+                annotations = [];
+                console.log('⚠️ No saved annotations found for this task');
+            }
             
-            // 기존 어노테이션들의 최대 span_id를 찾아서 nextSpanId 업데이트
-            let maxSpanId = 0;
-            let maxEntityId = 0;
-            annotations.forEach(ann => {
-                if (ann.span_id && ann.span_id > maxSpanId) {
-                    maxSpanId = ann.span_id;
-                }
-                if (ann.entity_id && ann.entity_id > maxEntityId) {
-                    maxEntityId = ann.entity_id;
-                }
-            });
+            // Reset span_id for manual labeling (start from 1)
+            nextSpanId = 1;
+            console.log('Reset nextSpanId to 1 for manual labeling');
             
-            // 새로운 어노테이션은 기존 최대값보다 큰 ID부터 시작
-            nextSpanId = maxSpanId + 1;
-            console.log('Updated nextSpanId to:', nextSpanId, 'based on existing annotations');
-            
-            // 기존 어노테이션을 하이라이트와 함께 렌더링
+            // Render annotations (saved ones if exist)
             renderAnnotations();
             updateStatistics();
+            
+            // Show save button if there are annotations
+            showSaveButtonIfNeeded();
         }
         
         function saveCurrentTaskAnnotations() {
@@ -3624,6 +4222,131 @@
             }
         }
         
+        // Saved Files Management Functions
+        function showSavedFilesModal() {
+            document.getElementById('savedFilesModal').style.display = 'flex';
+            loadSavedFilesList();
+        }
+        
+        function hideSavedFilesModal() {
+            document.getElementById('savedFilesModal').style.display = 'none';
+        }
+        
+        async function loadSavedFilesList() {
+            try {
+                const response = await fetch('/api/saved-files');
+                const files = await response.json();
+                
+                displayFilesList('modifiedFilesList', files.modified, 'modified');
+                displayFilesList('completedFilesList', files.completed, 'completed');
+                
+            } catch (error) {
+                console.error('Error loading saved files:', error);
+                document.getElementById('modifiedFilesList').innerHTML = '<div style="padding: 20px; text-align: center; color: #e74c3c;">Error loading files</div>';
+                document.getElementById('completedFilesList').innerHTML = '<div style="padding: 20px; text-align: center; color: #e74c3c;">Error loading files</div>';
+            }
+        }
+        
+        function displayFilesList(containerId, files, fileType) {
+            const container = document.getElementById(containerId);
+            
+            if (files.length === 0) {
+                container.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">No files found</div>';
+                return;
+            }
+            
+            let html = '';
+            files.forEach(file => {
+                const fileSize = formatFileSize(file.size);
+                const modifiedTime = new Date(file.modified_time).toLocaleString();
+                const iconColor = fileType === 'modified' ? '#3498db' : '#27ae60';
+                
+                html += `
+                    <div style="border-bottom: 1px solid #eee; padding: 10px; cursor: pointer; transition: background 0.2s;" 
+                         onmouseover="this.style.background='#f8f9fa'" 
+                         onmouseout="this.style.background='white'"
+                         onclick="viewSavedFile('${fileType}', '${file.filename}')">
+                        <div style="display: flex; justify-content: between; align-items: center;">
+                            <div style="flex: 1;">
+                                <div style="font-weight: 500; color: ${iconColor}; margin-bottom: 5px;">
+                                    📄 ${file.filename}
+                                </div>
+                                <div style="font-size: 12px; color: #666;">
+                                    ${fileSize} • ${modifiedTime}
+                                </div>
+                            </div>
+                            <div style="color: #999; font-size: 12px;">
+                                Click to view
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+        }
+        
+        async function viewSavedFile(fileType, filename) {
+            try {
+                const response = await fetch(`/api/saved-files/${fileType}/${filename}`);
+                const fileData = await response.json();
+                
+                // Show file content modal
+                document.getElementById('fileViewModal').style.display = 'flex';
+                document.getElementById('fileViewTitle').textContent = `📄 ${filename}`;
+                document.getElementById('fileViewContent').value = fileData.content;
+                
+                // Set file info
+                const lines = fileData.content.split('\n').length;
+                const chars = fileData.content.length;
+                document.getElementById('fileViewInfo').innerHTML = `
+                    <strong>Type:</strong> ${fileType === 'modified' ? 'Modified (전처리)' : 'Completed (완료)'} • 
+                    <strong>Lines:</strong> ${lines} • 
+                    <strong>Characters:</strong> ${chars}
+                `;
+                
+                // Store current file info for download
+                window.currentViewedFile = {
+                    filename: filename,
+                    content: fileData.content,
+                    type: fileType
+                };
+                
+            } catch (error) {
+                console.error('Error loading file:', error);
+                alert('파일을 불러오는 중 오류가 발생했습니다: ' + error.message);
+            }
+        }
+        
+        function hideFileViewModal() {
+            document.getElementById('fileViewModal').style.display = 'none';
+            window.currentViewedFile = null;
+        }
+        
+        function downloadCurrentFile() {
+            if (!window.currentViewedFile) {
+                alert('다운로드할 파일이 없습니다.');
+                return;
+            }
+            
+            const file = window.currentViewedFile;
+            const blob = new Blob([file.content], { type: 'text/plain' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = file.filename;
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+
         // Initialize file upload on page load
         document.addEventListener('DOMContentLoaded', function() {
             setupFileUpload();
@@ -3635,6 +4358,69 @@
             // Restore sidebar state
             restoreTasksSidebarState();
         });
+
+        // Auto-resize textarea based on content
+        function autoResize(textarea) {
+            // Reset height to auto to get the correct scrollHeight
+            textarea.style.height = 'auto';
+            
+            // Set height based on scrollHeight, with minimum height
+            const newHeight = Math.max(40, textarea.scrollHeight);
+            textarea.style.height = newHeight + 'px';
+        }
+
+        // Auto-resize content areas to fit content without scrollbars
+        function autoResizeContentAreas() {
+            // Resize text content area
+            const textContent = document.getElementById('textContent');
+            if (textContent) {
+                textContent.style.height = 'auto';
+                const contentHeight = textContent.scrollHeight;
+                textContent.style.height = Math.max(400, contentHeight) + 'px';
+            }
+
+            // Resize entity details panel
+            const entityDetails = document.querySelector('.entity-details-panel');
+            if (entityDetails) {
+                entityDetails.style.height = 'auto';
+                const detailsHeight = entityDetails.scrollHeight;
+                entityDetails.style.height = detailsHeight + 'px';
+            }
+
+            // Resize labels panel
+            const labelsPanel = document.querySelector('.labels-panel');
+            if (labelsPanel) {
+                labelsPanel.style.height = 'auto';
+                const labelsHeight = labelsPanel.scrollHeight;
+                labelsPanel.style.height = labelsHeight + 'px';
+            }
+
+            // Resize tasks list
+            const tasksList = document.querySelector('.tasks-list');
+            if (tasksList) {
+                tasksList.style.height = 'auto';
+                const tasksHeight = tasksList.scrollHeight;
+                tasksList.style.height = Math.max(200, tasksHeight) + 'px';
+            }
+        }
+
+        // Initialize auto-resize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const textInput = document.getElementById('textInput');
+            if (textInput) {
+                autoResize(textInput);
+                
+                // Also handle paste events
+                textInput.addEventListener('paste', function() {
+                    setTimeout(() => autoResize(textInput), 10);
+                });
+            }
+
+            // Auto-resize all content areas initially
+            setTimeout(autoResizeContentAreas, 100);
+        });
+
+
     </script>
     
     <!-- File Upload Modal -->
@@ -3660,6 +4446,54 @@
             <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
                 <button class="btn" onclick="hideUploadModal()">Cancel</button>
                 <button class="btn primary" onclick="uploadFiles()">Upload</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Saved Files Browser Modal -->
+    <div id="savedFilesModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+        <div style="background: white; padding: 30px; border-radius: 8px; max-width: 800px; width: 90%; max-height: 80vh; overflow-y: auto;">
+            <h2 style="margin-bottom: 20px; color: #2c3e50;">💾 Saved Files</h2>
+            
+            <div id="savedFilesContent">
+                <!-- Modified Files Section -->
+                <div style="margin-bottom: 30px;">
+                    <h3 style="color: #3498db; margin-bottom: 15px;">📝 Modified Files (전처리 파일)</h3>
+                    <div id="modifiedFilesList" style="max-height: 200px; overflow-y: auto; border: 1px solid #eee; border-radius: 5px;">
+                        <div style="padding: 20px; text-align: center; color: #999;">Loading...</div>
+                    </div>
+                </div>
+                
+                <!-- Completed Files Section -->
+                <div style="margin-bottom: 20px;">
+                    <h3 style="color: #27ae60; margin-bottom: 15px;">✅ Completed Files (라벨링 완료 파일)</h3>
+                    <div id="completedFilesList" style="max-height: 200px; overflow-y: auto; border: 1px solid #eee; border-radius: 5px;">
+                        <div style="padding: 20px; text-align: center; color: #999;">Loading...</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+                <button class="btn" onclick="hideSavedFilesModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- File View Modal -->
+    <div id="fileViewModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1001; align-items: center; justify-content: center;">
+        <div style="background: white; padding: 30px; border-radius: 8px; max-width: 1000px; width: 95%; max-height: 90vh; overflow-y: auto;">
+            <h2 id="fileViewTitle" style="margin-bottom: 20px; color: #2c3e50;">File Content</h2>
+            
+            <div style="margin-bottom: 20px;">
+                <textarea id="fileViewContent" style="width: 100%; height: 400px; font-family: monospace; font-size: 12px; border: 1px solid #ddd; border-radius: 5px; padding: 10px;" readonly></textarea>
+            </div>
+            
+            <div id="fileViewInfo" style="background: #f8f9fa; padding: 10px; border-radius: 5px; margin-bottom: 20px; font-size: 12px; color: #666;">
+            </div>
+            
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button class="btn" onclick="downloadCurrentFile()">📥 Download</button>
+                <button class="btn" onclick="hideFileViewModal()">Close</button>
             </div>
         </div>
     </div>

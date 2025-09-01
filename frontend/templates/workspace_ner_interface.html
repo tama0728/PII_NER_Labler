@@ -704,7 +704,7 @@
                 </div>
                 <div class="file-preview" id="filePreview" style="display: none;"></div>
             </div>
-            <input type="file" id="fileInput" class="file-upload" multiple accept=".txt,.csv,.json,.jsonl">
+            <input type="file" id="fileInput" class="file-upload" multiple accept=".jsonl">
             <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
                 <button class="btn" onclick="hideUploadModal()">Cancel</button>
                 <button class="btn btn-primary" onclick="uploadFiles()">Upload</button>
@@ -1134,8 +1134,35 @@
             const files = fileInput.files;
             const uploadArea = document.getElementById('uploadArea');
             
+            // 파일 선택 여부 체크
             if (files.length === 0) {
-                alert('Please select files first');
+                alert('먼저 파일을 선택해주세요.');
+                // 오류 메시지 후 파일 선택 대화상자 열기
+                fileInput.click();
+                return;
+            }
+            
+            // 파일 형식 검증 - JSONL만 허용
+            let hasInvalidFormat = false;
+            let invalidFileName = '';
+            
+            for (let file of files) {
+                const fileName = file.name.toLowerCase();
+                const fileExtension = fileName.substring(fileName.lastIndexOf('.'));
+                
+                if (fileExtension !== '.jsonl') {
+                    hasInvalidFormat = true;
+                    invalidFileName = file.name;
+                    break;
+                }
+            }
+            
+            if (hasInvalidFormat) {
+                alert(`적절하지 않은 파일 형식입니다.
+파일명: ${invalidFileName}
+지원 형식: .jsonl만 가능합니다.`);
+                // Clear the file input to reset state
+                fileInput.value = '';
                 return;
             }
             
@@ -1226,11 +1253,109 @@
                 a.download = `${workspaceData.name}_annotations.json`;
                 a.click();
                 URL.revokeObjectURL(url);
+                
+                // Ask user if they want to reset the workspace for next work
+                const shouldReset = confirm(`🔄 워크스페이스 내보내기가 완료되었습니다!
+
+다음 작업을 위해 워크스페이스를 초기화하시겠습니까?
+
+⚠️ 초기화하면 현재 로드된 모든 태스크와 어노테이션이 삭제됩니다.
+(이미 내보낸 파일은 안전합니다)`);
+                
+                if (shouldReset) {
+                    resetWorkspace();
+                }
+                
             } catch (error) {
                 console.error('Failed to export workspace:', error);
+                alert('워크스페이스 내보내기 중 오류가 발생했습니다: ' + error.message);
             }
         }
         
+        // Reset workspace to initial state for next work (team environment)
+        async function resetWorkspace() {
+            try {
+                // Clear client-side variables only (server data remains intact)
+                currentTask = null;
+                selectedLabel = null;
+                annotations = [];
+                isSelecting = false;
+                
+                // Clear UI elements
+                // Reset task selection
+                document.querySelectorAll('.task-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+                
+                // Clear text content display
+                const textContent = document.getElementById('textContent');
+                if (textContent) {
+                    textContent.innerHTML = '';
+                }
+                
+                // Clear current task info
+                const taskInfo = document.getElementById('currentTaskInfo');
+                if (taskInfo) {
+                    taskInfo.textContent = 'Select a task to start annotating';
+                }
+                
+                // Reset label selection
+                document.querySelectorAll('.label-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+                
+                // Clear merged annotations display
+                const mergedAnnotations = document.getElementById('mergedAnnotations');
+                if (mergedAnnotations) {
+                    mergedAnnotations.innerHTML = '<div class="empty-state"><p>🤝 No team annotations yet</p></div>';
+                }
+                
+                // Reset save button state
+                const saveBtn = document.getElementById('saveBtn');
+                if (saveBtn) {
+                    saveBtn.textContent = '💾 Save';
+                }
+                
+                // Clear file upload area
+                const fileInput = document.getElementById('fileInput');
+                if (fileInput) {
+                    fileInput.value = '';
+                }
+                
+                const filePreview = document.getElementById('filePreview');
+                if (filePreview) {
+                    filePreview.innerHTML = '';
+                    filePreview.style.display = 'none';
+                }
+                
+                // Clear manual task input
+                const manualTaskInput = document.getElementById('manualTaskInput');
+                if (manualTaskInput) {
+                    manualTaskInput.value = '';
+                }
+                
+                // Hide upload modal if open
+                const uploadModal = document.getElementById('uploadModal');
+                if (uploadModal) {
+                    uploadModal.style.display = 'none';
+                }
+                
+                // Reload tasks from server to get fresh state
+                await loadTasks();
+                
+                // Show success message
+                alert('🔄 워크스페이스 세션이 초기화되었습니다!
+
+팀의 기존 작업은 안전하게 보존되며, 새로운 작업을 시작할 수 있습니다.');
+                
+                console.log('✅ Workspace session reset completed (team environment)');
+                
+            } catch (error) {
+                console.error('Error resetting workspace session:', error);
+                alert('워크스페이스 초기화 중 오류가 발생했습니다: ' + error.message);
+            }
+        }
+
         // Keyboard shortcuts
         function setupEventListeners() {
             document.addEventListener('keydown', (e) => {
