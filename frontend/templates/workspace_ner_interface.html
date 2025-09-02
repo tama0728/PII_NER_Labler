@@ -405,10 +405,10 @@
         }
         
         .label-item {
-            display: flex;
-            width: 100%;
+            display: inline-flex;
+            width: auto;
             padding: 8px 12px;
-            margin: 2px 0;
+            margin: 2px 4px;
             border: 1px solid transparent;
             border-radius: 3px;
             cursor: pointer;
@@ -419,7 +419,7 @@
             position: relative;
             color: white;
             align-items: center;
-            justify-content: space-between;
+            gap: 12px;
         }
         
         .label-item:hover {
@@ -1194,20 +1194,7 @@
             </div>
         </div>
         
-        <div class="controls">
-            <div style="width: 100%; margin-bottom: 12px;">
-                <textarea class="textarea" id="textInput" placeholder="Enter text to annotate..." oninput="autoResize(this)"></textarea>
-            </div>
-            <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-                <button class="btn primary" onclick="loadText()">Load Text</button>
-                <button class="btn" onclick="showUploadModal()">📁 Upload Files</button>
-<button class="btn" onclick="clearAnnotations()">Clear</button>
-                <button class="btn primary" onclick="saveCurrentTask()" id="saveTaskBtn" style="display: none;">💾 Save Task</button>
-                <button class="btn" onclick="exportAnnotations()">Export</button>
-            </div>
-        </div>
-        
-        <!-- Tasks Section - Now horizontal below text container -->
+        <!-- Tasks Section - Now at the top -->
         <div class="tasks-section">
             <div class="tasks-header">
                 <div class="tasks-title">
@@ -1219,6 +1206,19 @@
                     <p>📝 No tasks yet</p>
                     <small>Upload files to create tasks</small>
                 </div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <div style="width: 100%; margin-bottom: 12px;">
+                <textarea class="textarea" id="textInput" placeholder="Enter text to annotate..." oninput="autoResize(this)"></textarea>
+            </div>
+            <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                <button class="btn primary" onclick="loadText()">Load Text</button>
+                <button class="btn" onclick="showUploadModal()">📁 Upload Files</button>
+                <button class="btn" onclick="clearAnnotations()">Clear</button>
+                <button class="btn primary" onclick="saveCurrentTask()" id="saveTaskBtn" style="display: none;">💾 Save Task</button>
+                <button class="btn" onclick="exportAnnotations()">Export</button>
             </div>
         </div>
 
@@ -1255,36 +1255,9 @@
                 </button>
                 {% endfor %}
             </div>
-            
-            
-
-                <button class="filter-clear-btn" onclick="clearAllFilters()">Clear All Filters</button>
-                <button class="btn add-label-btn" onclick="openAddLabelModal()" style="width: 100%; margin-bottom: 12px; background: #28a745; color: white; border: 1px solid #28a745;">+ Add New Label</button>
-                {% for label in labels %}
-                <button class="label-item" 
-                        style="background-color: {{ label.background }}; color: white;"
-                        data-label="{{ label.value }}"
-                        data-label-id="{{ label.value }}"
-                        onclick="selectLabel('{{ label.value }}')"
-                        oncontextmenu="console.log('Right click detected on:', '{{ label.value }}'); event.preventDefault(); openEditLabelModal('{{ label.value }}', true); return false;"
-                        title="Click to select, Right-click to edit">
-                    <div class="label-content">
-                        <span class="label-text">{{ label.value }}</span>
-                        {% if label.hotkey %}
-                        <span class="hotkey">{{ label.hotkey }}</span>
-                        {% endif %}
-                    </div>
-                    <div class="filter-controls">
-                        <div class="filter-checkbox" 
-                             data-label="{{ label.value }}"
-                             onclick="event.stopPropagation(); toggleLabelFilter('{{ label.value }}')"
-                             title="Toggle filter for this label"></div>
-                    </div>
-                </button>
-                {% endfor %}
-            </div>
-            
-            <div class="main-workspace">
+        </div>
+        
+        <div class="main-workspace">
                 <div class="text-panel">
                     <div class="text-content" id="textContent" onmouseup="if(typeof handleTextSelection === 'function') handleTextSelection(event)">
                         Click "Load Text" to start annotating...
