@@ -218,6 +218,54 @@
             min-height: auto;
         }
         
+        .main-workspace {
+            display: flex;
+            gap: 16px;
+            flex: 1;
+            min-height: 500px;
+        }
+        
+        /* Entity details panel styling */
+        .entity-details-row {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        
+        .entity-details-row .field-group {
+            flex: 1;
+            margin-bottom: 0;
+        }
+        
+        .field-group {
+            margin-bottom: 16px;
+        }
+        
+        .field-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 4px;
+        }
+        
+        /* Responsive layout for smaller screens */
+        @media (max-width: 1024px) {
+            .main-workspace {
+                flex-direction: column;
+            }
+            
+            .text-panel, .entity-details-panel {
+                width: 100%;
+                margin: 0;
+                margin-bottom: 16px;
+            }
+            
+            .entity-details-panel {
+                margin-bottom: 0;
+            }
+        }
+        
         .labels-panel {
             width: 250px;
             background: #343c7f;
@@ -239,6 +287,7 @@
         
         .text-panel {
             flex: 1;
+            width: 50%;
             background: white;
             border-radius: 3px;
             box-shadow: 2px 2px 8px #AAA;
@@ -246,6 +295,7 @@
             display: flex;
             flex-direction: column;
             min-height: auto;
+            margin-right: 8px;
         }
         
         .text-content {
@@ -261,13 +311,15 @@
         }
         
         .entity-details-panel {
-            width: 280px;
+            flex: 1;
+            width: 50%;
             background: white;
             border-radius: 3px;
             padding: 16px;
             box-shadow: 2px 2px 8px #AAA;
             border: 1px solid #e8e8e8;
             height: auto;
+            margin-left: 8px;
         }
         
         .entity-details-panel h3 {
@@ -1250,23 +1302,26 @@
                 {% endfor %}
             </div>
             
-            <div class="text-panel">
-                <div class="text-content" id="textContent" onmouseup="if(typeof handleTextSelection === 'function') handleTextSelection(event)">
-                    Click "Load Text" to start annotating...
+            <div class="main-workspace">
+                <div class="text-panel">
+                    <div class="text-content" id="textContent" onmouseup="if(typeof handleTextSelection === 'function') handleTextSelection(event)">
+                        Click "Load Text" to start annotating...
+                    </div>
                 </div>
-            </div>
-            
-            <div class="entity-details-panel">
+                
+                <div class="entity-details-panel">
                 <h3>어노테이션 상세 정보</h3>
                 
-                <div class="field-group">
-                    <label>선택된 텍스트:</label>
-                    <input type="text" id="selectedText" readonly style="background: #f8f9fa; color: #666; border: 1px solid #e8e8e8; padding: 6px 8px; border-radius: 3px; font-size: 12px;">
-                </div>
-                
-                <div class="field-group">
-                    <label>엔티티 타입:</label>
-                    <input type="text" id="entityType" readonly style="background: #f8f9fa; color: #666; border: 1px solid #e8e8e8; padding: 6px 8px; border-radius: 3px; font-size: 12px;">
+                <div class="entity-details-row">
+                    <div class="field-group">
+                        <label>선택된 텍스트:</label>
+                        <input type="text" id="selectedText" readonly style="background: #f8f9fa; color: #666; border: 1px solid #e8e8e8; padding: 6px 8px; border-radius: 3px; font-size: 12px; width: 100%;">
+                    </div>
+                    
+                    <div class="field-group">
+                        <label>엔티티 타입:</label>
+                        <input type="text" id="entityType" readonly style="background: #f8f9fa; color: #666; border: 1px solid #e8e8e8; padding: 6px 8px; border-radius: 3px; font-size: 12px; width: 100%;">
+                    </div>
                 </div>
                 
                 <div class="field-group">
@@ -1314,18 +1369,20 @@
                     <label>JSON 상세 정보:</label>
                     <textarea id="jsonDisplay" style="
                         width: 100%; 
-                        height: 150px; 
+                        height: 300px; 
                         font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace; 
-                        font-size: 11px; 
+                        font-size: 12px; 
                         background: #f8f9fa; 
                         border: 1px solid #e8e8e8; 
                         border-radius: 4px; 
-                        padding: 8px; 
+                        padding: 12px; 
                         resize: vertical;
                         color: #333;
+                        line-height: 1.4;
                     " placeholder="어노테이션을 선택하면 JSON 정보가 표시됩니다."></textarea>
                 </div>
             </div>
+        </div>
         </div>
         
         <div class="statistics" id="statistics" style="display: none;">
