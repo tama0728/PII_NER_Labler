@@ -1098,6 +1098,11 @@
         <div class="labels-section">
             <div class="labels-header">
                 <h3>Entity Labels</h3>
+                <small class="help-text" style="color: #666; margin-left: 15px;">
+                    💡 <strong>Ctrl+클릭</strong>으로 어노테이션을 연결하세요 | 
+                    1️⃣ 첫 번째 어노테이션 Ctrl+클릭 (연결 대상 선택) | 
+                    2️⃣ 두 번째 어노테이션 Ctrl+클릭 (연결 완료)
+                </small>
                 <div class="labels-header-buttons">
                     <button class="filter-clear-btn" onclick="clearAllFilters()">Clear All Filters</button>
                     <button class="btn add-label-btn" onclick="openAddLabelModal()" style="background: #28a745; color: white; border: 1px solid #28a745;">+ Add New Label</button>
@@ -1158,23 +1163,10 @@
                         <option value="direct">직접식별자</option>
                         <option value="quasi">준식별자</option>
                     </select>
-                    <small class="help-text">
-                        • 직접식별자: 이름, 주민번호 등<br>
-                        • 준식별자: 나이, 직업, 지역 등<br>
-                        • default: 마스킹이 필요하지 않은 일반 정보
-                    </small>
+
                 </div>
                 
-                <div class="field-group">
-                    <label>개체 연결 (Entity Linking):</label>
-                    <div class="entity-linking-controls">
-                        <small class="help-text" style="color: #666;">
-                            💡 <strong>Ctrl+클릭</strong>으로 어노테이션을 연결하세요<br>
-                            1️⃣ 첫 번째 어노테이션 Ctrl+클릭 (연결 대상 선택)<br>
-                            2️⃣ 두 번째 어노테이션 Ctrl+클릭 (연결 완료)
-                        </small>
-                    </div>
-                </div>
+
                 
                 <div class="auto-generated" style="margin-bottom: 16px;">
                     <label>작업자 (annotator):</label>
