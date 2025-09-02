@@ -1109,23 +1109,7 @@
             white-space: nowrap;
         }
         
-        .toggle-icon {
-            font-size: 18px;
-            cursor: pointer;
-            transition: opacity 0.3s ease;
-            min-width: 20px;
-            text-align: center;
-        }
-        
-        .tasks-sidebar.collapsed .tasks-header h3 {
-            opacity: 0;
-            width: 0;
-            overflow: hidden;
-        }
-        
-        .tasks-sidebar.collapsed .toggle-icon {
-            opacity: 1 !important;
-        }
+
         
         .tasks-sidebar.collapsed .tasks-title {
             justify-content: center;
@@ -1226,10 +1210,9 @@
         
         <!-- Tasks Section - Now horizontal below text container -->
         <div class="tasks-section">
-            <div class="tasks-header" onclick="toggleTasksSection()">
+            <div class="tasks-header">
                 <div class="tasks-title">
                     <h3>Tasks (<span id="totalTasks">0</span>)</h3>
-                    <span class="toggle-icon" id="tasksToggleIcon">▼</span>
                 </div>
             </div>
             <div class="tasks-list-horizontal" id="tasksList">
@@ -4413,37 +4396,9 @@
             }
         }
         
-        // Tasks sidebar toggle functionality
-        function toggleTasksSection() {
-            const section = document.querySelector('.tasks-section');
-            const icon = document.getElementById('tasksToggleIcon');
-            
-            section.classList.toggle('collapsed');
-            
-            // Update icon
-            if (sidebar.classList.contains('collapsed')) {
-                icon.textContent = '>';
-                localStorage.setItem('tasksSidebarCollapsed', 'true');
-            } else {
-                icon.textContent = '<';
-                localStorage.setItem('tasksSidebarCollapsed', 'false');
-            }
-        }
+
         
-        // Restore sidebar state from localStorage
-        function restoreTasksSectionState() {
-            const isCollapsed = localStorage.getItem('tasksSectionCollapsed') === 'true';
-            const section = document.querySelector('.tasks-section');
-            const icon = document.getElementById('tasksToggleIcon');
-            
-            if (isCollapsed) {
-                sidebar.classList.add('collapsed');
-                icon.textContent = '>';
-            } else {
-                sidebar.classList.remove('collapsed');
-                icon.textContent = '<';
-            }
-        }
+
         
         // Saved Files Management Functions
         function showSavedFilesModal() {
@@ -4578,8 +4533,7 @@
             window.uploadedTasks = [];
             updateTasksList();
             
-            // Restore sidebar state
-            restoreTasksSectionState();
+
         });
 
         // Auto-resize textarea based on content
