@@ -1700,7 +1700,7 @@
         }
         
         // Load text for annotation
-        async function loadText() {
+        function loadText() {
             console.log('loadText function called');
             const textInput = document.getElementById('textInput');
             console.log('textInput element:', textInput);
@@ -1712,34 +1712,25 @@
                 return;
             }
             
-            console.log('Making API request with text:', text);
+            console.log('Loading text without saving:', text);
             
-            try {
-                const response = await fetch('/api/tasks', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ text })
-                });
-                
-                const data = await response.json();
-                currentTaskId = data.task_id;
-                currentText = text;
-                
-                // Clear existing annotations (no auto-synchronization)
-                annotations = [];
-                
-                document.getElementById('textContent').textContent = text;
-                
-                // Auto-resize content areas after text is loaded
-                setTimeout(autoResizeContentAreas, 50);
-                
-                // Show auto-save success message
-                alert('✅ 텍스트가 로드되고 자동저장되었습니다!');
-                
-                updateStatistics();
-            } catch (error) {
-                alert('Error loading text: ' + error.message);
-            }
+            // Generate a temporary task ID for the session
+            currentTaskId = 'temp_' + Date.now();
+            currentText = text;
+            
+            // Clear existing annotations
+            annotations = [];
+            
+            // Update the text content in the labeling area
+            document.getElementById('textContent').textContent = text;
+            
+            // Auto-resize content areas after text is loaded
+            setTimeout(autoResizeContentAreas, 50);
+            
+            // Show success message (no save)
+            alert('✅ 텍스트가 라벨링 테이블에 로드되었습니다!');
+            
+            updateStatistics();
         }
         
         // Save current task annotations
