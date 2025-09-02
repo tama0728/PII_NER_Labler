@@ -53,14 +53,14 @@ def create_app(config_class=Config):
         try:
             labels = extractor.labels
             config_xml = extractor.get_label_config_xml()
-            return render_template('ner_interface.html', 
+            return render_template('workspace_ner_interface.html', 
                                  labels=labels,
                                  config_xml=config_xml)
         except Exception as e:
             print(f"Error in NER index route: {e}")
             return f"Error loading NER interface: {str(e)}", 500
     
-    # NER API routes - Original paths for ner_interface.html compatibility
+    # NER API routes - Original paths for workspace_ner_interface.html compatibility
     @app.route('/api/tasks', methods=['POST'])
     def ner_create_task_original():
         """Create a new NER annotation task (original path)"""
@@ -217,7 +217,7 @@ def create_app(config_class=Config):
         except Exception as e:
             return jsonify({'error': str(e)}), 500
 
-    # Original API routes for ner_interface.html compatibility
+    # Original API routes for workspace_ner_interface.html compatibility
     @app.route('/api/tasks/<task_id>')
     def ner_get_task_original(task_id):
         return ner_get_task(task_id)

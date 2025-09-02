@@ -3,7 +3,7 @@ Main application views
 Routes for serving the frontend
 """
 
-from flask import Blueprint, render_template, session, redirect, url_for
+from flask import Blueprint, render_template, session, redirect
 
 views_bp = Blueprint('views', __name__)
 
@@ -25,12 +25,30 @@ def projects():
 @views_bp.route('/annotate')
 def annotate():
     """Annotation interface"""
-    return render_template('ner_interface.html')
+    return render_template('workspace_ner_interface.html')
 
 @views_bp.route('/collaborate')
 def collaborate():
     """Team collaboration page - no login required"""
     return render_template('collaborate.html')
+
+@views_bp.route('/workspace')
+def workspace():
+    """Direct workspace access - simplified NER interface"""
+    from flask import current_app
+    
+    # Use the integrated NER extractor from app context
+    try:
+        extractor = current_app.ner_extractor
+        labels = extractor.labels
+        config_xml = extractor.get_label_config_xml()
+        
+        return render_template('workspace_ner_interface.html', 
+                             labels=labels,
+                             config_xml=config_xml)
+    except Exception as e:
+        print(f"Error loading workspace interface: {e}")
+        return f"Error loading workspace interface: {str(e)}", 500
 
 @views_bp.route('/collaborate/workspace/<workspace_id>')
 def workspace_annotate(workspace_id):
@@ -47,7 +65,7 @@ def workspace_annotate(workspace_id):
         # Get member name from session (set when joining workspace)
         member_name = session.get('member_name', 'Anonymous')
         
-        return render_template('ner_interface.html', 
+        return render_template('workspace_ner_interface.html', 
                              workspace_id=workspace_id,
                              labels=labels,
                              config_xml=config_xml,

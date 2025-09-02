@@ -3,6 +3,7 @@ Label service layer - simplified implementation
 """
 
 from typing import List, Optional, Dict, Any
+from backend.constants import GUEST_USER_ID
 from backend.models.label import Label
 from backend.repositories.label_repository import LabelRepository
 class LabelService:

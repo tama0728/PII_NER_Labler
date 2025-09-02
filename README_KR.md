@@ -90,7 +90,7 @@ kdpii_labler/
 ├── requirements.txt            # Python 종속성
 ├── frontend/
 │   ├── templates/
-│   │   ├── ner_interface.html  # 메인 NER 어노테이션 인터페이스
+│   │   ├── workspace_ner_interface.html  # 메인 NER 어노테이션 인터페이스
 │   │   ├── collaborate.html    # 팀 협업 페이지
 │   │   └── dashboard.html      # 사용자 대시보드
 │   └── static/                 # CSS, JavaScript, 이미지

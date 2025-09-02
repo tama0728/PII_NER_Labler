@@ -31,7 +31,7 @@ class Task(db.Model):
     
     # Foreign keys
     project_id: Mapped[int] = mapped_column(ForeignKey('projects.id'), nullable=False)
-    annotator_id: Mapped[Optional[int]] = mapped_column(ForeignKey('users.id'))
+    annotator_id: Mapped[Optional[int]] = mapped_column(Integer)  # Guest mode - no foreign key constraint
     
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
@@ -39,7 +39,7 @@ class Task(db.Model):
     
     # Relationships
     project: Mapped["Project"] = relationship("Project", back_populates="tasks")
-    annotator: Mapped[Optional["User"]] = relationship("User", back_populates="tasks")
+    # annotator relationship removed - using annotator_id only
     annotations: Mapped[List["Annotation"]] = relationship("Annotation", back_populates="task", cascade="all, delete-orphan")
     
     def mark_completed(self, annotator_id: Optional[int] = None) -> None:

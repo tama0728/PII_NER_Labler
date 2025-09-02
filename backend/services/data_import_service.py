@@ -4,6 +4,7 @@ Data import service - simplified implementation
 
 import json
 from typing import List, Dict, Any, Optional
+from backend.constants import GUEST_USER_ID
 from backend.services.project_service import ProjectService
 from backend.services.task_service import TaskService
 

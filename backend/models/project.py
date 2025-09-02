@@ -7,6 +7,7 @@ from backend.database import db
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import String, DateTime, Boolean, Text, Integer, ForeignKey
 from typing import Optional, List
+from backend.constants import GUEST_USER_ID
 
 class Project(db.Model):
     """Project model for grouping related annotation tasks"""
@@ -23,12 +24,12 @@ class Project(db.Model):
     require_all_labels: Mapped[bool] = mapped_column(Boolean, default=False)
     
     # Ownership and timestamps
-    owner_id: Mapped[int] = mapped_column(ForeignKey('users.id'), nullable=False)
+    owner_id: Mapped[int] = mapped_column(Integer, nullable=False, default=GUEST_USER_ID)  # Guest mode default
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # Relationships
-    owner: Mapped["User"] = relationship("User", back_populates="projects")
+    # owner relationship removed - using owner_id only
     tasks: Mapped[List["Task"]] = relationship("Task", back_populates="project", cascade="all, delete-orphan")
     labels: Mapped[List["Label"]] = relationship("Label", back_populates="project", cascade="all, delete-orphan")
     

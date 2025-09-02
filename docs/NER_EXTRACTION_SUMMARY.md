@@ -21,7 +21,7 @@ kdpii_labler/
 ├── ner_extractor.py          # 핵심 NER 추출 엔진
 ├── ner_web_interface.py      # Flask 웹 인터페이스
 ├── templates/
-│   └── ner_interface.html    # HTML 어노테이션 인터페이스
+│   └── workspace_ner_interface.html    # HTML 어노테이션 인터페이스
 ├── ner_demo.py              # 사용법 데모
 ├── requirements_ner.txt      # 필요 패키지
 ├── NER_README.md            # 상세 문서
@@ -162,7 +162,7 @@ task_id = extractor.import_label_studio_task(ls_task)
 
 1. **ner_extractor.py** - 핵심 NER 엔진
 2. **ner_web_interface.py** - Flask 웹 서버
-3. **templates/ner_interface.html** - 웹 인터페이스
+3. **templates/workspace_ner_interface.html** - 웹 인터페이스
 4. **ner_demo.py** - 기능 데모
 5. **requirements_ner.txt** - 의존성
 6. **NER_README.md** - 상세 문서

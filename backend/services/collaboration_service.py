@@ -83,11 +83,22 @@ class CollaborationService:
         return False
     
     def add_task(self, workspace_id: str, text: str, metadata: Dict = None) -> Optional[str]:
-        """Add a task to workspace"""
+        """Add a task to workspace with duplicate detection"""
         workspace = self.get_workspace(workspace_id)
         if not workspace:
             return None
         
+        # Check for duplicate content using text hash
+        import hashlib
+        text_hash = hashlib.md5(text.strip().encode()).hexdigest()
+        
+        # Check if task with same content already exists
+        for existing_task in workspace['tasks'].values():
+            existing_hash = hashlib.md5(existing_task['text'].strip().encode()).hexdigest()
+            if existing_hash == text_hash:
+                return existing_task['id']  # Return existing task ID instead of creating duplicate
+        
+        # Create new task only if no duplicate found
         task_id = str(uuid.uuid4())[:8]
         task = {
             'id': task_id,

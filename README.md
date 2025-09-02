@@ -89,7 +89,7 @@ kdpii_labler/
 ├── requirements.txt            # Python dependencies
 ├── frontend/
 │   ├── templates/
-│   │   ├── ner_interface.html  # Main NER annotation interface
+│   │   ├── workspace_ner_interface.html  # Main NER annotation interface
 │   │   ├── collaborate.html    # Team collaboration page
 │   │   └── dashboard.html      # User dashboard
 │   └── static/                 # CSS, JavaScript, images

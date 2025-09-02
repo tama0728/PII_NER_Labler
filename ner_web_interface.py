@@ -5,9 +5,8 @@ Web interface for Named Entity Recognition based on Label Studio design
 """
 
 from flask import Flask, render_template, request, jsonify, send_from_directory
-import json
 import os
-from ner_extractor import NERExtractor, NERLabel
+from ner_extractor import NERExtractor
 
 app = Flask(__name__, template_folder='frontend/templates')
 
@@ -33,7 +32,7 @@ def index():
         config_xml = extractor.get_label_config_xml()
         print(f"Rendering with {len(labels)} labels")
         
-        return render_template('ner_interface.html', 
+        return render_template('workspace_ner_interface.html', 
                              labels=labels,
                              config_xml=config_xml)
     except Exception as e:
@@ -197,7 +196,7 @@ def main():
     os.makedirs('templates', exist_ok=True)
     
     # Verify templates exist
-    template_path = 'frontend/templates/ner_interface.html'
+    template_path = 'frontend/templates/workspace_ner_interface.html'
     if not os.path.exists(template_path):
         print(f"ERROR: Template file not found: {template_path}")
         return

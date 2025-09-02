@@ -353,9 +353,11 @@ def upload_file(workspace_id):
         if not texts:
             return jsonify({'error': 'No text content found in file'}), 400
         
-        # Create tasks from parsed texts
+        # Create tasks from parsed texts with duplicate tracking
         created_tasks = []
+        duplicate_tasks = []
         failed_tasks = []
+        processed_texts = set()  # Track texts processed in this upload
         
         for i, text in enumerate(texts):
             if len(text) < 5:  # Skip very short texts
@@ -364,6 +366,17 @@ def upload_file(workspace_id):
             # Truncate very long texts
             if len(text) > 5000:
                 text = text[:5000] + "..."
+            
+            # Check if we already processed this text in current upload
+            import hashlib
+            text_hash = hashlib.md5(text.strip().encode()).hexdigest()
+            if text_hash in processed_texts:
+                continue  # Skip duplicate within same file
+            processed_texts.add(text_hash)
+            
+            # Get workspace state before adding task
+            workspace_before = collab_service.get_workspace(workspace_id)
+            existing_task_count = len(workspace_before['tasks'])
             
             task_id = collab_service.add_task(
                 workspace_id, 
@@ -376,7 +389,15 @@ def upload_file(workspace_id):
             )
             
             if task_id:
-                created_tasks.append(task_id)
+                # Get workspace state after adding task
+                workspace_after = collab_service.get_workspace(workspace_id)
+                new_task_count = len(workspace_after['tasks'])
+                
+                # If task count didn't increase, it was a duplicate
+                if new_task_count == existing_task_count:
+                    duplicate_tasks.append(task_id)
+                else:
+                    created_tasks.append(task_id)
             else:
                 failed_tasks.append(i + 1)
         
@@ -385,8 +406,10 @@ def upload_file(workspace_id):
             'filename': file.filename,
             'total_texts': len(texts),
             'created_tasks': len(created_tasks),
+            'duplicate_tasks': len(duplicate_tasks),
             'failed_tasks': len(failed_tasks),
             'task_ids': created_tasks,
+            'duplicate_task_ids': duplicate_tasks,
             'extracted_labels': extracted_labels
         })
         
@@ -408,6 +431,7 @@ def batch_upload(workspace_id):
     files = request.files.getlist('files[]')
     results = []
     total_created = 0
+    total_duplicates = 0
     all_extracted_labels = set()  # 모든 파일에서 추출된 라벨들
     
     for file in files:
@@ -427,6 +451,8 @@ def batch_upload(workspace_id):
             # 추출된 라벨들을 전체 세트에 추가
             all_extracted_labels.update(extracted_labels)
             created_tasks = []
+            duplicate_tasks = []
+            processed_texts = set()  # Track texts processed for this file
             
             for i, text in enumerate(texts):
                 if len(text) < 5:
@@ -434,6 +460,17 @@ def batch_upload(workspace_id):
                     
                 if len(text) > 5000:
                     text = text[:5000] + "..."
+                
+                # Check if we already processed this text in current file
+                import hashlib
+                text_hash = hashlib.md5(text.strip().encode()).hexdigest()
+                if text_hash in processed_texts:
+                    continue  # Skip duplicate within same file
+                processed_texts.add(text_hash)
+                
+                # Get workspace state before adding task
+                workspace_before = collab_service.get_workspace(workspace_id)
+                existing_task_count = len(workspace_before['tasks'])
                 
                 task_id = collab_service.add_task(
                     workspace_id,
@@ -446,16 +483,26 @@ def batch_upload(workspace_id):
                 )
                 
                 if task_id:
-                    created_tasks.append(task_id)
+                    # Get workspace state after adding task
+                    workspace_after = collab_service.get_workspace(workspace_id)
+                    new_task_count = len(workspace_after['tasks'])
+                    
+                    # If task count didn't increase, it was a duplicate
+                    if new_task_count == existing_task_count:
+                        duplicate_tasks.append(task_id)
+                    else:
+                        created_tasks.append(task_id)
             
             results.append({
                 'filename': file.filename,
                 'status': 'success',
                 'created_tasks': len(created_tasks),
+                'duplicate_tasks': len(duplicate_tasks),
                 'total_texts': len(texts)
             })
             
             total_created += len(created_tasks)
+            total_duplicates += len(duplicate_tasks)
             
         except Exception as e:
             results.append({
@@ -468,6 +515,7 @@ def batch_upload(workspace_id):
         'message': f'Batch upload completed',
         'total_files': len(files),
         'total_created_tasks': total_created,
+        'total_duplicate_tasks': total_duplicates,
         'results': results,
         'extracted_labels': list(all_extracted_labels)
     })
