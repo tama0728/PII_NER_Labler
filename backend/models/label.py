@@ -105,33 +105,8 @@ class Label(db.Model):
     @classmethod
     def create_default_labels(cls, project_id: int) -> List["Label"]:
         """Create default NER labels for a project"""
-        default_labels = [
-            {'value': 'PER', 'background': '#FF5733', 'hotkey': '1', 
-             'category': 'Person', 'description': 'Person names', 
-             'example': 'John Smith, Mary Johnson'},
-            {'value': 'ORG', 'background': '#FF8C00', 'hotkey': '2', 
-             'category': 'Organization', 'description': 'Organization names', 
-             'example': 'Microsoft, Google, United Nations'},
-            {'value': 'LOC', 'background': '#FFD700', 'hotkey': '3', 
-             'category': 'Location', 'description': 'Location names', 
-             'example': 'New York, Seoul, Mount Everest'},
-            {'value': 'MISC', 'background': '#32CD32', 'hotkey': '4', 
-             'category': 'Miscellaneous', 'description': 'Other named entities', 
-             'example': 'Nobel Prize, iPhone, Christmas'}
-        ]
-        
-        created_labels = []
-        for i, label_data in enumerate(default_labels):
-            label = cls(
-                project_id=project_id,
-                sort_order=i,
-                **label_data
-            )
-            db.session.add(label)
-            created_labels.append(label)
-        
-        db.session.commit()
-        return created_labels
+        # No default labels - user will create their own
+        return []
     
     def to_dict(self, include_usage: bool = False) -> dict:
         """Convert to dictionary representation"""
