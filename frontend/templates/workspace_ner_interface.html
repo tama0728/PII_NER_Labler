@@ -120,6 +120,7 @@
             flex-wrap: wrap;
             max-height: 150px;
             overflow-y: auto;
+            justify-content: center;
         }
         
         .tasks-list-horizontal .task-item {
@@ -177,20 +178,32 @@
         }
         
         .labels-header-buttons .filter-clear-btn {
-            padding: 4px 8px;
-            font-size: 11px;
+            padding: 6px 12px;
+            font-size: 12px;
             background: #6c757d;
             color: white;
             border: 1px solid #6c757d;
             border-radius: 3px;
             cursor: pointer;
+            height: 32px;
+            min-width: 100px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            vertical-align: middle;
         }
         
         .labels-header-buttons .add-label-btn {
-            padding: 4px 8px;
-            font-size: 11px;
+            padding: 6px 12px;
+            font-size: 12px;
             border-radius: 3px;
             cursor: pointer;
+            height: 32px;
+            min-width: 120px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            vertical-align: middle;
         }
         
         .labels-panel-horizontal {
@@ -428,8 +441,8 @@
         }
         
         .label-item.selected {
-            border-color: white;
-            box-shadow: 0 0 0 1px white;
+            border: 2px solid #ff0000 !important;
+            box-shadow: 0 0 5px rgba(255, 0, 0, 0.5);
         }
         
         .label-item.filtered {
@@ -1225,7 +1238,7 @@
         <!-- Entity Labels Section - Now horizontal below tasks -->
         <div class="labels-section">
             <div class="labels-header">
-
+                <h3>Entity Labels</h3>
                 <div class="labels-header-buttons">
                     <button class="filter-clear-btn" onclick="clearAllFilters()">Clear All Filters</button>
                     <button class="btn add-label-btn" onclick="openAddLabelModal()" style="background: #28a745; color: white; border: 1px solid #28a745;">+ Add New Label</button>
@@ -2085,7 +2098,16 @@
         // 중첩 어노테이션 삭제 옵션 표시
         function showOverlapOptions(event, annotationIndices) {
             if (annotationIndices.length === 1) {
-                removeAnnotation(annotationIndices[0]);
+                // 단일 어노테이션 삭제 전 확인
+                const ann = annotations[annotationIndices[0]];
+                const confirmMsg = `정말로 이 라벨을 삭제하시겠습니까?
+
+텍스트: "${ann.text}"
+라벨: ${ann.labels.join(', ')}`;
+                
+                if (confirm(confirmMsg)) {
+                    removeAnnotation(annotationIndices[0]);
+                }
                 return;
             }
             
@@ -2095,11 +2117,24 @@
                 return `${i + 1}. "${ann.text}" [${ann.labels.join(', ')}]`;
             }).join('\n');
             
-            const choice = prompt(`삭제할 어노테이션을 선택하세요:\n\n${options}\n\n번호를 입력하세요 (1-${annotationIndices.length}), 취소는 0:`);
+            const choice = prompt(`삭제할 어노테이션을 선택하세요:
+
+${options}
+
+번호를 입력하세요 (1-${annotationIndices.length}), 취소는 0:`);
             const choiceNum = parseInt(choice);
             
             if (choiceNum > 0 && choiceNum <= annotationIndices.length) {
-                removeAnnotation(annotationIndices[choiceNum - 1]);
+                // 선택한 어노테이션 삭제 전 확인
+                const ann = annotations[annotationIndices[choiceNum - 1]];
+                const confirmMsg = `정말로 이 라벨을 삭제하시겠습니까?
+
+텍스트: "${ann.text}"
+라벨: ${ann.labels.join(', ')}`;
+                
+                if (confirm(confirmMsg)) {
+                    removeAnnotation(annotationIndices[choiceNum - 1]);
+                }
             }
         }
         
