@@ -1201,8 +1201,7 @@
             <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
                 <button class="btn primary" onclick="loadText()">Load Text</button>
                 <button class="btn" onclick="showUploadModal()">📁 Upload Files</button>
-                <button class="btn" onclick="showSavedFilesModal()">💾 View Saved Files</button>
-                <button class="btn" onclick="clearAnnotations()">Clear</button>
+<button class="btn" onclick="clearAnnotations()">Clear</button>
                 <button class="btn primary" onclick="saveCurrentTask()" id="saveTaskBtn" style="display: none;">💾 Save Task</button>
                 <button class="btn" onclick="exportAnnotations()">Export</button>
             </div>
@@ -2344,12 +2343,7 @@
                     uploadModal.style.display = 'none';
                 }
                 
-                const savedFilesModal = document.getElementById('savedFilesModal');
-                if (savedFilesModal) {
-                    savedFilesModal.style.display = 'none';
-                }
-                
-                // Show success message
+// Show success message
                 alert('🔄 워크스페이스가 초기화되었습니다!\n\n새로운 작업을 시작할 수 있습니다.');
                 
                 console.log('✅ Workspace reset completed successfully');
@@ -4364,130 +4358,7 @@
         
 
         
-        // Saved Files Management Functions
-        function showSavedFilesModal() {
-            document.getElementById('savedFilesModal').style.display = 'flex';
-            loadSavedFilesList();
-        }
-        
-        function hideSavedFilesModal() {
-            document.getElementById('savedFilesModal').style.display = 'none';
-        }
-        
-        async function loadSavedFilesList() {
-            try {
-                const response = await fetch('/api/saved-files');
-                const files = await response.json();
-                
-                displayFilesList('modifiedFilesList', files.modified, 'modified');
-                displayFilesList('completedFilesList', files.completed, 'completed');
-                
-            } catch (error) {
-                console.error('Error loading saved files:', error);
-                document.getElementById('modifiedFilesList').innerHTML = '<div style="padding: 20px; text-align: center; color: #e74c3c;">Error loading files</div>';
-                document.getElementById('completedFilesList').innerHTML = '<div style="padding: 20px; text-align: center; color: #e74c3c;">Error loading files</div>';
-            }
-        }
-        
-        function displayFilesList(containerId, files, fileType) {
-            const container = document.getElementById(containerId);
-            
-            if (files.length === 0) {
-                container.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">No files found</div>';
-                return;
-            }
-            
-            let html = '';
-            files.forEach(file => {
-                const fileSize = formatFileSize(file.size);
-                const modifiedTime = new Date(file.modified_time).toLocaleString();
-                const iconColor = fileType === 'modified' ? '#3498db' : '#27ae60';
-                
-                html += `
-                    <div style="border-bottom: 1px solid #eee; padding: 10px; cursor: pointer; transition: background 0.2s;" 
-                         onmouseover="this.style.background='#f8f9fa'" 
-                         onmouseout="this.style.background='white'"
-                         onclick="viewSavedFile('${fileType}', '${file.filename}')">
-                        <div style="display: flex; justify-content: between; align-items: center;">
-                            <div style="flex: 1;">
-                                <div style="font-weight: 500; color: ${iconColor}; margin-bottom: 5px;">
-                                    📄 ${file.filename}
-                                </div>
-                                <div style="font-size: 12px; color: #666;">
-                                    ${fileSize} • ${modifiedTime}
-                                </div>
-                            </div>
-                            <div style="color: #999; font-size: 12px;">
-                                Click to view
-                            </div>
-                        </div>
-                    </div>
-                `;
-            });
-            
-            container.innerHTML = html;
-        }
-        
-        function formatFileSize(bytes) {
-            if (bytes === 0) return '0 Bytes';
-            const k = 1024;
-            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
-        }
-        
-        async function viewSavedFile(fileType, filename) {
-            try {
-                const response = await fetch(`/api/saved-files/${fileType}/${filename}`);
-                const fileData = await response.json();
-                
-                // Show file content modal
-                document.getElementById('fileViewModal').style.display = 'flex';
-                document.getElementById('fileViewTitle').textContent = `📄 ${filename}`;
-                document.getElementById('fileViewContent').value = fileData.content;
-                
-                // Set file info
-                const lines = fileData.content.split('\n').length;
-                const chars = fileData.content.length;
-                document.getElementById('fileViewInfo').innerHTML = `
-                    <strong>Type:</strong> ${fileType === 'modified' ? 'Modified (전처리)' : 'Completed (완료)'} • 
-                    <strong>Lines:</strong> ${lines} • 
-                    <strong>Characters:</strong> ${chars}
-                `;
-                
-                // Store current file info for download
-                window.currentViewedFile = {
-                    filename: filename,
-                    content: fileData.content,
-                    type: fileType
-                };
-                
-            } catch (error) {
-                console.error('Error loading file:', error);
-                alert('파일을 불러오는 중 오류가 발생했습니다: ' + error.message);
-            }
-        }
-        
-        function hideFileViewModal() {
-            document.getElementById('fileViewModal').style.display = 'none';
-            window.currentViewedFile = null;
-        }
-        
-        function downloadCurrentFile() {
-            if (!window.currentViewedFile) {
-                alert('다운로드할 파일이 없습니다.');
-                return;
-            }
-            
-            const file = window.currentViewedFile;
-            const blob = new Blob([file.content], { type: 'text/plain' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = file.filename;
-            a.click();
-            window.URL.revokeObjectURL(url);
-        }
+
 
         // Initialize file upload on page load
         document.addEventListener('DOMContentLoaded', function() {
@@ -4591,52 +4462,7 @@
         </div>
     </div>
 
-    <!-- Saved Files Browser Modal -->
-    <div id="savedFilesModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
-        <div style="background: white; padding: 30px; border-radius: 8px; max-width: 800px; width: 90%; max-height: 80vh; overflow-y: auto;">
-            <h2 style="margin-bottom: 20px; color: #2c3e50;">💾 Saved Files</h2>
-            
-            <div id="savedFilesContent">
-                <!-- Modified Files Section -->
-                <div style="margin-bottom: 30px;">
-                    <h3 style="color: #3498db; margin-bottom: 15px;">📝 Modified Files (전처리 파일)</h3>
-                    <div id="modifiedFilesList" style="max-height: 200px; overflow-y: auto; border: 1px solid #eee; border-radius: 5px;">
-                        <div style="padding: 20px; text-align: center; color: #999;">Loading...</div>
-                    </div>
-                </div>
-                
-                <!-- Completed Files Section -->
-                <div style="margin-bottom: 20px;">
-                    <h3 style="color: #27ae60; margin-bottom: 15px;">✅ Completed Files (라벨링 완료 파일)</h3>
-                    <div id="completedFilesList" style="max-height: 200px; overflow-y: auto; border: 1px solid #eee; border-radius: 5px;">
-                        <div style="padding: 20px; text-align: center; color: #999;">Loading...</div>
-                    </div>
-                </div>
-            </div>
-            
-            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
-                <button class="btn" onclick="hideSavedFilesModal()">Close</button>
-            </div>
-        </div>
-    </div>
 
-    <!-- File View Modal -->
-    <div id="fileViewModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1001; align-items: center; justify-content: center;">
-        <div style="background: white; padding: 30px; border-radius: 8px; max-width: 1000px; width: 95%; max-height: 90vh; overflow-y: auto;">
-            <h2 id="fileViewTitle" style="margin-bottom: 20px; color: #2c3e50;">File Content</h2>
-            
-            <div style="margin-bottom: 20px;">
-                <textarea id="fileViewContent" style="width: 100%; height: 400px; font-family: monospace; font-size: 12px; border: 1px solid #ddd; border-radius: 5px; padding: 10px;" readonly></textarea>
-            </div>
-            
-            <div id="fileViewInfo" style="background: #f8f9fa; padding: 10px; border-radius: 5px; margin-bottom: 20px; font-size: 12px; color: #666;">
-            </div>
-            
-            <div style="display: flex; gap: 10px; justify-content: flex-end;">
-                <button class="btn" onclick="downloadCurrentFile()">📥 Download</button>
-                <button class="btn" onclick="hideFileViewModal()">Close</button>
-            </div>
-        </div>
     </div>
 </body>
 </html>
