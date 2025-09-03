@@ -12,17 +12,9 @@ class Config:
     # Flask settings
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
     
-    # Database settings
-    DATABASE_URL = os.environ.get('DATABASE_URL')
-    if DATABASE_URL:
-        # Handle postgres:// URLs for compatibility
-        if DATABASE_URL.startswith('postgres://'):
-            DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql://', 1)
-        SQLALCHEMY_DATABASE_URI = DATABASE_URL
-    else:
-        # Default to SQLite
-        basedir = Path(__file__).parent.parent.absolute()
-        SQLALCHEMY_DATABASE_URI = f'sqlite:///{basedir}/data/kdpii_labeler.db'
+    # Database settings - SQLite only
+    basedir = Path(__file__).parent.parent.absolute()
+    SQLALCHEMY_DATABASE_URI = f'sqlite:///{basedir}/data/kdpii_labeler.db'
     
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ENGINE_OPTIONS = {

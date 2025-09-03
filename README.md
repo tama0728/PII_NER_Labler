@@ -176,13 +176,12 @@ RESTful API 엔드포인트
 
 ### config.py 주요 설정
 - `SECRET_KEY`: Flask 보안 키
-- `DATABASE_URL`: 데이터베이스 연결 URL
+
 - `UPLOAD_FOLDER`: 파일 업로드 디렉토리
 - `MAX_CONTENT_LENGTH`: 최대 파일 크기 (16MB)
 
 ### 환경변수
 - `SECRET_KEY`: 프로덕션 보안 키
-- `DATABASE_URL`: 데이터베이스 URL
 - `UPLOAD_FOLDER`: 업로드 폴더 경로
 
 ## 실행 방법
@@ -203,7 +202,6 @@ python app.py --port 8081
 ```bash
 # 환경변수 설정
 export SECRET_KEY="your-production-secret-key"
-export DATABASE_URL="postgresql://user:password@host:port/dbname"
 
 # 애플리케이션 실행
 gunicorn app:create_app
@@ -224,7 +222,7 @@ gunicorn app:create_app
 
 ## 주요 기술 스택
 
-- **백엔드**: Flask, SQLAlchemy, SQLite/PostgreSQL
+- **백엔드**: Flask, SQLAlchemy, SQLite
 - **프론트엔드**: HTML5, JavaScript (ES6+), CSS3
 - **데이터 처리**: pandas, numpy
 - **NER**: spaCy (확장 가능)
@@ -234,22 +232,15 @@ gunicorn app:create_app
 1. **세션 관리**: 워크스페이스 참여 시 세션에 `workspace_id`, `member_name` 저장
 2. **파일 업로드**: JSONL 포맷 검증 및 대용량 파일 처리
 3. **어노테이션 병합**: 충돌 해결 로직 확인 필요
-4. **데이터베이스**: SQLite(개발) vs PostgreSQL(프로덕션) 호환성
+4. **데이터베이스**: SQLite 사용
 5. **보안**: 프로덕션 환경에서 SECRET_KEY 반드시 설정
 
-## 확장 포인트
-
-1. **인증 시스템**: 현재 세션 기반, OAuth/JWT 확장 가능
-2. **ML 모델 통합**: spaCy 모델 로딩 및 자동 어노테이션
-3. **실시간 협업**: WebSocket을 통한 실시간 동기화
-4. **성능 최적화**: Redis 캐싱, 데이터베이스 인덱싱
-5. **UI/UX 개선**: React/Vue 프론트엔드 전환
 
 ## 트러블슈팅
 
 ### 일반적인 문제
 1. **포트 충돌**: `--port` 옵션으로 다른 포트 사용
-2. **데이터베이스 락**: SQLite 동시 접근 제한, PostgreSQL 권장
+2. **데이터베이스 락**: SQLite 동시 접근 제한 시 재시도
 3. **메모리 부족**: 대용량 파일 처리 시 스트리밍 사용
 4. **파일 권한**: exports, data 디렉토리 쓰기 권한 확인
 
