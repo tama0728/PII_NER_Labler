@@ -199,15 +199,6 @@
             margin-bottom: 10px;
         }
         
-        .member-badge {
-            display: inline-block;
-            padding: 4px 8px;
-            background: #f0f0f0;
-            border-radius: 4px;
-            font-size: 12px;
-            margin-right: 5px;
-        }
-        
         .delete-btn {
             position: absolute;
             top: 10px;
@@ -225,86 +216,6 @@
         
         .workspace-card:hover .delete-btn {
             opacity: 1;
-        }
-        
-        /* Member Selection Styles */
-        .member-selection-container {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        
-        .add-member-container {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .add-member-btn {
-            background: #28a745;
-            color: white;
-            border: none;
-            padding: 8px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: bold;
-            min-width: 40px;
-            transition: all 0.3s ease;
-        }
-        
-        .add-member-btn:hover {
-            background: #218838;
-            transform: scale(1.05);
-        }
-        
-        .member-select {
-            padding: 10px;
-            border: 2px solid #ddd;
-            border-radius: 6px;
-            font-size: 14px;
-            background: white;
-            cursor: pointer;
-            transition: border-color 0.3s ease;
-        }
-        
-        .member-select:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-        
-        .cancel-add-btn {
-            background: #6c757d;
-            color: white;
-            border: none;
-            padding: 6px 12px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 12px;
-        }
-        
-        .cancel-add-btn:hover {
-            background: #5a6268;
-        }
-        
-        .member-mode-text {
-            color: #666;
-            font-style: italic;
-            margin-top: 5px;
-        }
-        
-        #memberName {
-            padding: 10px;
-            border: 2px solid #ddd;
-            border-radius: 6px;
-            font-size: 14px;
-            flex: 1;
-            transition: border-color 0.3s ease;
-        }
-        
-        #memberName:focus {
-            outline: none;
-            border-color: #667eea;
         }
     </style>
 </head>
@@ -340,6 +251,11 @@
                 </div>
                 
                 <div class="form-group">
+                    <label for="memberName">Your Name *</label>
+                    <input type="text" id="memberName" required placeholder="Enter your name">
+                </div>
+                
+                <div class="form-group">
                     <label for="workspaceDesc">Description</label>
                     <textarea id="workspaceDesc" placeholder="Brief description of this workspace..."></textarea>
                 </div>
@@ -352,45 +268,7 @@
         </div>
     </div>
     
-    <!-- Join Workspace Modal -->
-    <div id="joinModal" class="modal">
-        <div class="modal-content">
-            <button class="close-modal" onclick="hideJoinModal()">×</button>
-            <h2>Join Workspace</h2>
-            
-            <form id="joinWorkspaceForm">
-                <div class="form-group">
-                    <label for="memberSelection">Select Member *</label>
-                    <div class="member-selection-container">
-                        <!-- Existing Members Toggle -->
-                        <div id="existingMembersSection" class="existing-members" style="display: none;">
-                            <select id="memberSelect" class="member-select">
-                                <option value="">Select existing member...</option>
-                            </select>
-                        </div>
-                        
-                        <!-- Add New Member Section -->
-                        <div id="newMemberSection" class="new-member">
-                            <div class="add-member-container">
-                                <button type="button" id="addMemberBtn" class="add-member-btn">+</button>
-                                <input type="text" id="memberName" placeholder="Enter your name" autocomplete="off" style="display: none;">
-                                <button type="button" id="cancelAddBtn" class="cancel-add-btn" style="display: none;" onclick="cancelAddMember()">Cancel</button>
-                            </div>
-                        </div>
-                        
-                        <div class="member-mode-text">
-                            <small id="memberModeText">Click + to add new member</small>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="form-actions">
-                    <button type="button" class="btn btn-secondary" onclick="hideJoinModal()">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Join Workspace</button>
-                </div>
-            </form>
-        </div>
-    </div>
+
     
     <script>
         let selectedWorkspaceId = null;
@@ -414,18 +292,14 @@
                     emptyState.style.display = 'none';
                     
                     grid.innerHTML = workspaces.map(ws => `
-                        <div class="workspace-card" onclick="joinWorkspace('${ws.id}')">
+                        <div class="workspace-card" onclick="enterWorkspace('${ws.id}', '${ws.member_name}')">
                             <button class="delete-btn" onclick="event.stopPropagation(); deleteWorkspace('${ws.id}')">Delete</button>
                             <div class="workspace-name">${ws.name}</div>
                             <div class="workspace-description">${ws.description || 'No description'}</div>
                             <div class="workspace-stats">
                                 <span>📝 ${Object.keys(ws.tasks || {}).length} tasks</span>
-                                <span>👥 ${(ws.members || []).length} members</span>
+                                <span>👤 Owner: ${ws.member_name || 'Unknown'}</span>
                             </div>
-                            ${ws.members && ws.members.length > 0 ? 
-                                `<div style="margin-top: 10px;">
-                                    ${ws.members.map(m => `<span class="member-badge">${m}</span>`).join('')}
-                                </div>` : ''}
                         </div>
                     `).join('');
                 }
@@ -443,124 +317,26 @@
             document.getElementById('createWorkspaceForm').reset();
         }
         
-        function showJoinModal() {
-            document.getElementById('joinModal').classList.add('active');
-            loadExistingMembers();
-            setupMemberSelection();
-        }
-        
-        function hideJoinModal() {
-            document.getElementById('joinModal').classList.remove('active');
-            document.getElementById('joinWorkspaceForm').reset();
-            resetMemberSelection();
-        }
-        
-        function joinWorkspace(workspaceId) {
-            selectedWorkspaceId = workspaceId;
-            showJoinModal();
-        }
-        
-        async function loadExistingMembers() {
-            if (!selectedWorkspaceId) return;
-            
-            try {
-                const response = await fetch('/collab/workspaces');
-                const workspaces = await response.json();
-                const workspace = workspaces.find(ws => ws.id === selectedWorkspaceId);
-                
-                const memberSelect = document.getElementById('memberSelect');
-                const existingMembersSection = document.getElementById('existingMembersSection');
-                
-                if (workspace && workspace.members && workspace.members.length > 0) {
-                    // Clear existing options except the first one
-                    memberSelect.innerHTML = '<option value="">Select existing member...</option>';
-                    
-                    // Add existing members
-                    workspace.members.forEach(member => {
-                        const option = document.createElement('option');
-                        option.value = member;
-                        option.textContent = member;
-                        memberSelect.appendChild(option);
-                    });
-                    
-                    existingMembersSection.style.display = 'block';
-                    document.getElementById('memberModeText').textContent = 'Select existing member or click + to add new';
+        // Enter workspace directly (no join modal needed for 1-person workspaces)
+        function enterWorkspace(workspaceId, memberName) {
+            // Set session data and redirect to annotation interface
+            fetch(`/collab/workspaces/${workspaceId}/enter`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({member_name: memberName})
+            }).then(response => {
+                if (response.ok) {
+                    // Redirect to workspace annotation interface
+                    window.location.href = `/collaborate/workspace/${workspaceId}`;
                 } else {
-                    existingMembersSection.style.display = 'none';
-                    document.getElementById('memberModeText').textContent = 'Click + to add new member';
+                    alert('Failed to enter workspace');
                 }
-            } catch (error) {
-                console.error('Failed to load members:', error);
-            }
+            }).catch(error => {
+                console.error('Error entering workspace:', error);
+                alert('Failed to enter workspace');
+            });
         }
-        
-        function setupMemberSelection() {
-            const addMemberBtn = document.getElementById('addMemberBtn');
-            const memberNameInput = document.getElementById('memberName');
-            const cancelAddBtn = document.getElementById('cancelAddBtn');
-            const memberSelect = document.getElementById('memberSelect');
-            
-            // Add member button click
-            addMemberBtn.onclick = function() {
-                memberNameInput.style.display = 'block';
-                memberNameInput.setAttribute('required', 'true');
-                cancelAddBtn.style.display = 'block';
-                addMemberBtn.style.display = 'none';
-                memberSelect.disabled = true;
-                memberSelect.removeAttribute('required');
-                memberNameInput.focus();
-                document.getElementById('memberModeText').textContent = 'Enter your name';
-            };
-            
-            // Handle member select change
-            memberSelect.onchange = function() {
-                if (memberSelect.value) {
-                    memberNameInput.removeAttribute('required');
-                } else {
-                    // If no member selected and input is hidden, no validation needed
-                    if (memberNameInput.style.display === 'none') {
-                        memberNameInput.removeAttribute('required');
-                    }
-                }
-            };
-        }
-        
-        function cancelAddMember() {
-            const addMemberBtn = document.getElementById('addMemberBtn');
-            const memberNameInput = document.getElementById('memberName');
-            const cancelAddBtn = document.getElementById('cancelAddBtn');
-            const memberSelect = document.getElementById('memberSelect');
-            
-            memberNameInput.style.display = 'none';
-            memberNameInput.value = '';
-            memberNameInput.removeAttribute('required');
-            cancelAddBtn.style.display = 'none';
-            addMemberBtn.style.display = 'block';
-            memberSelect.disabled = false;
-            
-            const existingMembersSection = document.getElementById('existingMembersSection');
-            if (existingMembersSection.style.display !== 'none') {
-                document.getElementById('memberModeText').textContent = 'Select existing member or click + to add new';
-            } else {
-                document.getElementById('memberModeText').textContent = 'Click + to add new member';
-            }
-        }
-        
-        function resetMemberSelection() {
-            const addMemberBtn = document.getElementById('addMemberBtn');
-            const memberNameInput = document.getElementById('memberName');
-            const cancelAddBtn = document.getElementById('cancelAddBtn');
-            const memberSelect = document.getElementById('memberSelect');
-            
-            memberNameInput.style.display = 'none';
-            memberNameInput.value = '';
-            memberNameInput.removeAttribute('required');
-            cancelAddBtn.style.display = 'none';
-            addMemberBtn.style.display = 'block';
-            memberSelect.disabled = false;
-            memberSelect.value = '';
-            memberSelect.removeAttribute('required');
-        }
+
         
         async function deleteWorkspace(workspaceId) {
             if (!confirm('Are you sure you want to delete this workspace? This action cannot be undone.')) {
@@ -585,73 +361,30 @@
             e.preventDefault();
             
             const name = document.getElementById('workspaceName').value;
+            const memberName = document.getElementById('memberName').value;
             const description = document.getElementById('workspaceDesc').value;
             
             try {
                 const response = await fetch('/collab/workspaces', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({name, description})
+                    body: JSON.stringify({name, member_name: memberName, description})
                 });
                 
                 if (response.ok) {
+                    const result = await response.json();
                     hideCreateModal();
                     loadWorkspaces();
+                    
+                    // Auto-enter the newly created workspace
+                    if (result.workspace_id) {
+                        setTimeout(() => {
+                            enterWorkspace(result.workspace_id, memberName);
+                        }, 500);
+                    }
                 }
             } catch (error) {
                 console.error('Failed to create workspace:', error);
-            }
-        });
-        
-        // Handle join workspace form
-        document.getElementById('joinWorkspaceForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            // Get member name from either select or input
-            const memberSelect = document.getElementById('memberSelect');
-            const memberNameInput = document.getElementById('memberName');
-            const existingMembersSection = document.getElementById('existingMembersSection');
-            
-            let memberName;
-            let isNewMember = false;
-            
-            // Check if input field is visible and has value (new member)
-            if (memberNameInput.style.display !== 'none' && memberNameInput.value.trim()) {
-                memberName = memberNameInput.value.trim();
-                isNewMember = true;
-            } 
-            // Check if existing member is selected
-            else if (existingMembersSection.style.display !== 'none' && memberSelect.value) {
-                memberName = memberSelect.value;
-                isNewMember = false;
-            } 
-            // No valid selection
-            else {
-                alert('Please select an existing member or enter your name');
-                return;
-            }
-            
-            try {
-                const response = await fetch(`/collab/workspaces/${selectedWorkspaceId}/join`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({member_name: memberName})
-                });
-                
-                if (response.ok) {
-                    // If new member was added, refresh the workspace list to show updated member count
-                    if (isNewMember) {
-                        await loadWorkspaces();
-                    }
-                    // Redirect to workspace annotation page
-                    window.location.href = `/collaborate/workspace/${selectedWorkspaceId}`;
-                } else {
-                    const errorData = await response.json();
-                    alert(`Failed to join workspace: ${errorData.error || 'Unknown error'}`);
-                }
-            } catch (error) {
-                console.error('Failed to join workspace:', error);
-                alert('Failed to join workspace. Please try again.');
             }
         });
     </script>

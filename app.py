@@ -4,7 +4,7 @@ KDPII Labeler - Integrated NER + Backend Application
 Main entry point combining ner_web_interface.py features with backend architecture
 """
 
-from flask import Flask, render_template, request, jsonify, send_from_directory
+from flask import Flask, render_template, request, jsonify, send_from_directory, session, redirect
 from flask_sqlalchemy import SQLAlchemy
 from backend.config import Config
 from backend.database import db
@@ -46,19 +46,11 @@ def create_app(config_class=Config):
 
     # Add NER routes from ner_web_interface.py
     
-    # Main NER interface (accessible via /ner)
+    # Redirect root access to collaboration interface
     @app.route('/ner')
-    def ner_index():
-        """Main NER annotation interface"""
-        try:
-            labels = extractor.labels
-            config_xml = extractor.get_label_config_xml()
-            return render_template('workspace_ner_interface.html', 
-                                 labels=labels,
-                                 config_xml=config_xml)
-        except Exception as e:
-            print(f"Error in NER index route: {e}")
-            return f"Error loading NER interface: {str(e)}", 500
+    def ner_redirect():
+        """Redirect to collaboration interface"""
+        return redirect('/collaborate')
     
     # NER API routes - Original paths for workspace_ner_interface.html compatibility
     @app.route('/api/tasks', methods=['POST'])

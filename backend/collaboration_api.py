@@ -19,18 +19,22 @@ def list_workspaces():
 
 @collab_bp.route('/workspaces', methods=['POST'])
 def create_workspace():
-    """Create a new workspace"""
+    """Create a new workspace with member name"""
     data = request.get_json()
     name = data.get('name')
+    member_name = data.get('member_name')
     description = data.get('description', '')
     
     if not name:
         return jsonify({'error': 'Workspace name is required'}), 400
     
-    workspace_id = collab_service.create_workspace(name, description)
+    if not member_name:
+        return jsonify({'error': 'Member name is required'}), 400
+    
+    workspace_id = collab_service.create_workspace(name, description, member_name)
     return jsonify({
         'workspace_id': workspace_id,
-        'message': f'Workspace "{name}" created successfully'
+        'message': f'Workspace "{name}" created successfully for {member_name}'
     })
 
 @collab_bp.route('/workspaces/<workspace_id>', methods=['GET'])
@@ -69,6 +73,44 @@ def join_workspace(workspace_id):
         'message': f'Joined workspace as {member_name}',
         'workspace_id': workspace_id,
         'member_name': member_name
+    })
+
+@collab_bp.route('/workspaces/<workspace_id>/enter', methods=['POST'])
+def enter_workspace(workspace_id):
+    """Enter a workspace (for 1-person workspaces)"""
+    data = request.get_json()
+    member_name = data.get('member_name')
+    
+    if not member_name:
+        return jsonify({'error': 'Member name is required'}), 400
+    
+    # Check if workspace exists
+    workspace = collab_service.get_workspace(workspace_id)
+    if not workspace:
+        return jsonify({'error': 'Workspace not found'}), 404
+    
+    # Verify this member owns this workspace (skip for legacy workspaces without member_name)
+    workspace_owner = workspace.get('member_name')
+    if workspace_owner and workspace_owner != member_name:
+        return jsonify({'error': 'Access denied. This workspace belongs to a different user.'}), 403
+    
+    # Set session data
+    session['workspace_id'] = workspace_id
+    session['member_name'] = member_name
+    
+    return jsonify({
+        'message': f'Entered workspace as {member_name}',
+        'workspace_id': workspace_id,
+        'member_name': member_name
+    })
+
+@collab_bp.route('/workspaces/test-session', methods=['POST'])
+def test_session():
+    """Debug session data"""
+    return jsonify({
+        'workspace_id': session.get('workspace_id'),
+        'member_name': session.get('member_name'),
+        'session_keys': list(session.keys())
     })
 
 @collab_bp.route('/workspaces/<workspace_id>/tasks', methods=['GET'])

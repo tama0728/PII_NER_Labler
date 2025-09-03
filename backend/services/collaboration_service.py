@@ -32,13 +32,14 @@ class CollaborationService:
         with open(self.workspaces_file, 'w') as f:
             json.dump(self.workspaces, f, indent=2)
     
-    def create_workspace(self, name: str, description: str = "") -> str:
-        """Create a new workspace"""
+    def create_workspace(self, name: str, description: str = "", member_name: str = "Anonymous") -> str:
+        """Create a new workspace with single member"""
         workspace_id = str(uuid.uuid4())[:8]
         workspace = {
             'id': workspace_id,
             'name': name,
             'description': description,
+            'member_name': member_name,  # Store single member name
             'created_at': datetime.now().isoformat(),
             'tasks': {},
             'labels': [
@@ -48,7 +49,7 @@ class CollaborationService:
                 {'name': 'DATE', 'color': '#96CEB4'},
                 {'name': 'MISC', 'color': '#FFA500'}
             ],
-            'members': [],
+            'members': [member_name],  # Keep single member in array for compatibility
             'annotation_sessions': {}
         }
         

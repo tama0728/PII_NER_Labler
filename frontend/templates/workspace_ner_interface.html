@@ -1772,8 +1772,7 @@
                 const spanId = nextSpanId++;
                 const entityId = spanId;
                 
-                // 어노테이터 정보 설정
-                const currentAnnotator = document.getElementById('annotator')?.value || 'Anonymous';
+                // 어노테이터 정보는 이미 전역에서 설정됨 (중복 제거)
                 
                 // 중첩 어노테이션 지원: 기존 어노테이션을 삭제하지 않고 새로 추가
                 const newAnnotation = {
@@ -2813,7 +2812,7 @@ ${options}
                 selectedTextEl.value = annotation.text || '';
                 entityTypeEl.value = annotation.labels ? annotation.labels.join(', ') : '';
                 identifierTypeEl.value = annotation.identifier_type || 'default';
-                annotatorEl.value = annotation.annotator || '{{ member_name or "Anonymous" }}';
+                annotatorEl.value = annotation.annotator || currentAnnotator;
                 spanIdEl.value = annotation.span_id || '';
                 entityIdEl.value = annotation.entity_id || '';
                 
@@ -2827,7 +2826,7 @@ ${options}
                     span_id: annotation.span_id || '',
                     entity_id: annotation.entity_id || '',
                     identifier_type: annotation.identifier_type || 'default',
-                    annotator: annotation.annotator || currentUser.loginId
+                    annotator: annotation.annotator || currentAnnotator
                 };
                 jsonDisplayTextarea.value = JSON.stringify(jsonData, null, 2);
                 jsonDisplayTextarea.style.border = '';
@@ -2836,7 +2835,7 @@ ${options}
                 selectedTextEl.value = '';
                 entityTypeEl.value = '';
                 identifierTypeEl.value = 'default';
-                annotatorEl.value = currentUser.loginId;
+                annotatorEl.value = currentAnnotator;
                 spanIdEl.value = '';
                 entityIdEl.value = '';
                 
@@ -2942,7 +2941,7 @@ ${options}
         function updateUIFromAnnotation(annotation, fromJSON = false) {
             document.getElementById('selectedText').value = annotation.text;
             document.getElementById('entityType').value = annotation.labels.join(', ');
-            document.getElementById('annotator').value = annotation.annotator || currentUser.loginId;
+            document.getElementById('annotator').value = annotation.annotator || currentAnnotator;
             document.getElementById('identifierType').value = annotation.identifier_type || 'default';
             
             // JSON도 업데이트 (루프 방지)
@@ -3051,7 +3050,7 @@ ${options}
                 selectedAnnotation.span_id = parsedData.span_id || '';
                 selectedAnnotation.entity_id = parsedData.entity_id || '';
                 selectedAnnotation.identifier_type = parsedData.identifier_type || 'default';
-                selectedAnnotation.annotator = parsedData.annotator || currentUser.loginId;
+                selectedAnnotation.annotator = parsedData.annotator || currentAnnotator;
                 
                 // UI 필드들 업데이트
                 updateUIFromAnnotation(selectedAnnotation);
@@ -3073,7 +3072,7 @@ ${options}
             document.getElementById('selectedText').value = annotation.text || '';
             document.getElementById('entityType').value = annotation.labels ? annotation.labels.join(', ') : '';
             document.getElementById('identifierType').value = annotation.identifier_type || 'default';
-            document.getElementById('annotator').value = annotation.annotator || currentUser.loginId;
+            document.getElementById('annotator').value = annotation.annotator || currentAnnotator;
             document.getElementById('spanId').value = annotation.span_id || '';
             document.getElementById('entityId').value = annotation.entity_id || '';
         }
