@@ -1156,6 +1156,11 @@
                     </div>
                 </div>
                 
+                <div class="auto-generated" style="margin-bottom: 16px;">
+                    <label>작업자 (annotator):</label>
+                    <input type="text" id="annotator" value="{{ member_name or 'Anonymous' }}" readonly style="width: 100%;">
+                </div>
+                
                 <div class="field-group">
                     <label>식별자 유형 (identifier_type):</label>
                     <select id="identifierType">
@@ -1165,6 +1170,8 @@
                     </select>
 
                 </div>
+                
+
                 
 
                 
@@ -2795,7 +2802,7 @@ ${options}
                 selectedTextEl.value = annotation.text || '';
                 entityTypeEl.value = annotation.labels ? annotation.labels.join(', ') : '';
                 identifierTypeEl.value = annotation.identifier_type || 'default';
-                annotatorEl.value = annotation.annotator || currentUser.loginId;
+                annotatorEl.value = annotation.annotator || '{{ member_name or "Anonymous" }}';
                 spanIdEl.value = annotation.span_id || '';
                 entityIdEl.value = annotation.entity_id || '';
                 
@@ -2803,7 +2810,7 @@ ${options}
                 const actualText = currentText ? currentText.substring(annotation.start || 0, annotation.end || 0) : (annotation.text || '');
                 const jsonData = {
                     text: actualText,
-                    labels: annotation.labels || [],
+                    entity_type: (annotation.labels && annotation.labels.length > 0) ? annotation.labels[0] : '',
                     start_offset: annotation.start || 0,
                     end_offset: annotation.end || 0,
                     span_id: annotation.span_id || '',
