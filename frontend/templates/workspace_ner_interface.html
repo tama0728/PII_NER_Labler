@@ -1597,6 +1597,9 @@
             // Clear existing annotations
             annotations = [];
             
+            // Reset nextSpanId to 1 for new labeling session
+            nextSpanId = 1;
+            
             // Update the text content in the labeling area
             document.getElementById('textContent').textContent = text;
             
@@ -1870,6 +1873,9 @@
                     return b.end - a.end; // 같은 시작점이면 긴 것 먼저
                 });
                 
+                // 정렬 후 ID 재할당 (위치 기반)
+                reindexAnnotationIds();
+                
                 // Update currentTask with sorted annotations
                 currentTask.annotations = [...annotations];
                 
@@ -2055,7 +2061,10 @@ ${options}
         
         // 어노테이션 ID 재정렬 함수 (연결된 entity_id 보존)
         function reindexAnnotationIds() {
-            // 1. span_id만 순차적으로 재할당 (위치 기반)
+            // 1. 위치(start) 기준으로 어노테이션 정렬
+            annotations.sort((a, b) => a.start - b.start);
+            
+            // 2. span_id를 위치 순서대로 재할당
             annotations.forEach((annotation, index) => {
                 annotation.span_id = index + 1; // 1부터 시작
             });
