@@ -1151,7 +1151,7 @@
                         data-label="{{ label.value }}"
                         data-label-id="{{ label.value }}"
                         onclick="selectLabel('{{ label.value }}')"
-                        oncontextmenu="console.log('Right click detected on:', '{{ label.value }}'); event.preventDefault(); openEditLabelModal('{{ label.value }}', true); return false;"
+                        oncontextmenu="event.preventDefault(); event.stopPropagation(); console.log('Right click detected on:', '{{ label.value }}'); openEditLabelModal('{{ label.value }}', true); return false;"
                         title="Click to select, Right-click to edit">
                     <div class="label-content">
                         <span class="label-text">{{ label.value }}</span>
@@ -2041,6 +2041,10 @@ ${options}
         function removeAnnotation(index) {
             if (index >= 0 && index < annotations.length) {
                 annotations.splice(index, 1);
+                
+                // ID 동기화: 삭제 후 모든 span_id와 entity_id를 재정렬
+                reindexAnnotationIds();
+                
                 renderAnnotations();
                 updateStatistics();
                 autoSaveTask(); // Auto-save task progress
@@ -2049,10 +2053,46 @@ ${options}
             }
         }
         
+        // 어노테이션 ID 재정렬 함수 (연결된 entity_id 보존)
+        function reindexAnnotationIds() {
+            // 1. span_id만 순차적으로 재할당 (위치 기반)
+            annotations.forEach((annotation, index) => {
+                annotation.span_id = index + 1; // 1부터 시작
+            });
+            
+            // 2. entity_id는 연결 상태를 유지하되, 사용되지 않는 ID는 정리
+            const usedEntityIds = new Set(annotations.map(ann => ann.entity_id));
+            const entityIdMap = new Map();
+            let nextEntityId = 1;
+            
+            // 기존 entity_id를 새로운 연속적인 ID로 매핑
+            annotations.forEach(annotation => {
+                if (!entityIdMap.has(annotation.entity_id)) {
+                    entityIdMap.set(annotation.entity_id, nextEntityId++);
+                }
+                annotation.entity_id = entityIdMap.get(annotation.entity_id);
+            });
+            
+            // nextSpanId 업데이트
+            nextSpanId = annotations.length + 1;
+            
+            // currentTask.annotations도 동기화
+            if (currentTask && currentTask.annotations) {
+                currentTask.annotations = [...annotations];
+            }
+            
+            console.log('Annotation IDs reindexed. Next span ID:', nextSpanId);
+            console.log('Entity ID mapping:', Object.fromEntries(entityIdMap));
+        }
+        
         // Clear all annotations
         function clearAnnotations() {
             annotations = [];
             selectedAnnotation = null;
+            
+            // nextSpanId 리셋
+            nextSpanId = 1;
+            
             if (currentText) {
                 document.getElementById('textContent').textContent = currentText;
             }
@@ -2862,6 +2902,11 @@ ${options}
             // Remove annotations in reverse order to maintain indices
             for (let i = annotationsToRemove.length - 1; i >= 0; i--) {
                 annotations.splice(annotationsToRemove[i], 1);
+            }
+            
+            // ID 동기화: 라벨별 삭제 후에도 ID 재정렬
+            if (annotationsToRemove.length > 0) {
+                reindexAnnotationIds();
             }
             
             console.log(`Removed/updated annotations for deleted label: ${labelValue}`);
@@ -4203,9 +4248,13 @@ ${options}
                 console.log('⚠️ No saved annotations found for this task');
             }
             
-            // Reset span_id for manual labeling (start from 1)
-            nextSpanId = 1;
-            console.log('Reset nextSpanId to 1 for manual labeling');
+            // 기존 어노테이션이 있으면 ID 동기화 후 nextSpanId 설정
+            if (annotations.length > 0) {
+                reindexAnnotationIds();
+            } else {
+                nextSpanId = 1;
+                console.log('Reset nextSpanId to 1 for manual labeling');
+            }
             
             // Render annotations (saved ones if exist)
             renderAnnotations();
