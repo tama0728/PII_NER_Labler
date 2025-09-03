@@ -55,8 +55,11 @@ class AuthManager {
 
     updateUserInfo() {
         if (this.currentUser) {
-            document.getElementById('user-name').textContent = this.currentUser.username;
-            document.getElementById('user-role').textContent = this.currentUser.role;
+            const userNameEl = document.getElementById('user-name');
+            const userRoleEl = document.getElementById('user-role');
+            
+            if (userNameEl) userNameEl.textContent = this.currentUser.username;
+            if (userRoleEl) userRoleEl.textContent = this.currentUser.role;
         }
     }
 }

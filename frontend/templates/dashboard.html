@@ -1,6 +1,8 @@
 {% extends "base.html" %}
 
 {% block content %}
+<!-- Hidden login screen for auth.js compatibility -->
+<div id="login-screen" style="display: none;"></div>
 <!-- Export Files Dashboard -->
 <div id="export-dashboard">
     <div class="dashboard-header">
@@ -39,28 +41,20 @@
                         <span id="detail-workspace"></span>
                     </div>
                     <div class="detail-item">
+                        <label>Annotator:</label>
+                        <span id="detail-annotator"></span>
+                    </div>
+                    <div class="detail-item">
                         <label>Export Date:</label>
                         <span id="detail-date"></span>
-                    </div>
-                    <div class="detail-item">
-                        <label>File Size:</label>
-                        <span id="detail-size"></span>
-                    </div>
-                    <div class="detail-item">
-                        <label>Format:</label>
-                        <span id="detail-format"></span>
-                    </div>
-                    <div class="detail-item">
-                        <label>Records:</label>
-                        <span id="detail-records"></span>
                     </div>
                 </div>
             </div>
             <div class="detail-section">
                 <h4>Actions</h4>
                 <div class="file-actions">
-                    <button onclick="downloadFile()" class="btn-primary">Download</button>
-                    <button onclick="previewFile()" class="btn-secondary">Preview</button>
+                    <button onclick="viewJsonlFile()" class="btn-primary">View JSONL</button>
+                    <button onclick="downloadFile()" class="btn-secondary">Download</button>
                     <button onclick="deleteFile()" class="btn-danger">Delete</button>
                 </div>
             </div>
@@ -72,7 +66,6 @@
     </div>
 </div>
     
-
 
 <!-- Create Project Modal -->
 <div id="create-project-modal" class="modal" style="display: none;">
@@ -105,15 +98,22 @@ let filteredFiles = [];
 
 async function loadExportedFiles() {
     try {
+        console.log('📥 워크스페이스 목록 로딩 시작...');
         const response = await fetch('/api/exports');
+        console.log('📡 API 응답 상태:', response.status);
+        
         const data = await response.json();
+        console.log('📊 받은 데이터:', data);
+        
         currentFiles = data.files || [];
+        console.log('📁 현재 파일 수:', currentFiles.length);
+        
         filteredFiles = [...currentFiles];
         updateStats();
         populateWorkspaceFilter();
         renderFileList();
     } catch (error) {
-        console.error('Error loading exported files:', error);
+        console.error('❌ 워크스페이스 로딩 에러:', error);
         showMessage('Error loading files', 'error');
     }
 }
@@ -123,15 +123,22 @@ function updateStats() {
 }
 
 function populateWorkspaceFilter() {
+    console.log('🏷️ 워크스페이스 필터 생성 중...');
     const workspaces = [...new Set(currentFiles.map(file => file.workspace))];
+    console.log('🗂️ 찾은 워크스페이스:', workspaces);
+    
     const select = document.getElementById('workspace-select');
     select.innerHTML = '<option value="">전체</option>';
+    
     workspaces.forEach(workspace => {
+        console.log('➕ 워크스페이스 추가:', workspace);
         const option = document.createElement('option');
         option.value = workspace;
         option.textContent = workspace;
         select.appendChild(option);
     });
+    
+    console.log('✅ 워크스페이스 필터 완료, 총', workspaces.length, '개');
 }
 
 function setupFilters() {
@@ -172,10 +179,8 @@ function showFileDetails(fileId) {
     
     document.getElementById('file-name').textContent = file.name;
     document.getElementById('detail-workspace').textContent = file.workspace;
+    document.getElementById('detail-annotator').textContent = file.annotator || 'unknown_user';
     document.getElementById('detail-date').textContent = formatDateTime(file.created_at);
-    document.getElementById('detail-size').textContent = formatFileSize(file.size);
-    document.getElementById('detail-format').textContent = file.format.toUpperCase();
-    document.getElementById('detail-records').textContent = file.record_count || 'N/A';
     
     window.currentFileDetails = file;
     document.getElementById('file-details-modal').style.display = 'block';
@@ -231,53 +236,42 @@ async function downloadFileById(fileId) {
     }
 }
 
-async function previewFile() {
+async function viewJsonlFile() {
     if (!window.currentFileDetails) return;
     
     try {
         const response = await fetch('/api/exports/' + window.currentFileDetails.id + '/preview');
-        if (!response.ok) throw new Error('Preview failed');
+        if (!response.ok) throw new Error('Failed to load file');
         
-        const data = await response.json();
+        const content = await response.text();
         const previewContainer = document.getElementById('file-preview');
         
-        if (window.currentFileDetails.format === 'json') {
-            previewContainer.innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
-        } else if (window.currentFileDetails.format === 'csv') {
-            const table = document.createElement('table');
-            table.className = 'preview-table';
-            
-            if (data.length > 0) {
-                const headerRow = table.insertRow();
-                Object.keys(data[0]).forEach(key => {
-                    const th = document.createElement('th');
-                    th.textContent = key;
-                    headerRow.appendChild(th);
-                });
-                
-                data.slice(0, 10).forEach(row => {
-                    const tr = table.insertRow();
-                    Object.values(row).forEach(value => {
-                        const td = tr.insertCell();
-                        td.textContent = value;
-                    });
-                });
-                
-                if (data.length > 10) {
-                    const infoRow = table.insertRow();
-                    const td = infoRow.insertCell();
-                    td.colSpan = Object.keys(data[0]).length;
-                    td.textContent = '... and ' + (data.length - 10) + ' more rows';
-                    td.className = 'preview-info';
+        // JSONL 파일을 줄별로 분리하여 보기 좋게 표시
+        const lines = content.trim().split('\n');
+        let formattedContent = '';
+        
+        lines.forEach((line, index) => {
+            if (line.trim()) {
+                try {
+                    const jsonObj = JSON.parse(line);
+                    formattedContent += '<div class="jsonl-line">' +
+                        '<div class="line-number">Line ' + (index + 1) + ':</div>' +
+                        '<pre>' + JSON.stringify(jsonObj, null, 2) + '</pre>' +
+                        '</div>';
+                } catch (e) {
+                    formattedContent += '<div class="jsonl-line">' +
+                        '<div class="line-number">Line ' + (index + 1) + ' (Invalid JSON):</div>' +
+                        '<pre>' + line + '</pre>' +
+                        '</div>';
                 }
             }
-            previewContainer.appendChild(table);
-        }
+        });
         
+        previewContainer.innerHTML = formattedContent;
         document.getElementById('preview-section').style.display = 'block';
     } catch (error) {
-        console.error('Preview error:', error);
-        showMessage('Preview failed', 'error');
+        console.error('JSONL file load error:', error);
+        showMessage('Failed to load file', 'error');
     }
 }
 

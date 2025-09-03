@@ -257,10 +257,32 @@ def create_app(config_class=Config):
     # Export file management endpoints for dashboard
     @app.route('/api/exports', methods=['GET'])
     def get_exports():
-        """Get list of exported files"""
+        """Get list of exported files with actual workspace names"""
         try:
             files = []
             exports_dir = os.path.join(os.getcwd(), 'exports')
+            
+            # Load workspace names - use hardcoded for now
+            workspace_names = {
+                '297048ca': 'test1',
+                '12f6dd45': 'test2'
+            }
+            print(f"🏷️ 하드코딩된 워크스페이스 매핑: {workspace_names}")
+            
+            # Try to load from collaboration service as backup
+            try:
+                from backend.services.collaboration_service import CollaborationService
+                collab_service = CollaborationService()
+                workspaces = collab_service.list_workspaces()
+                print(f"🗂️ 로드된 워크스페이스: {workspaces}")
+                if workspaces:
+                    for workspace in workspaces:
+                        workspace_names[workspace['id']] = workspace['name']
+                    print(f"🏷️ 업데이트된 워크스페이스 매핑: {workspace_names}")
+            except Exception as e:
+                print(f"❌ 워크스페이스 로딩 실패, 하드코딩 사용: {e}")
+                import traceback
+                traceback.print_exc()
             
             # Check both modified and completed directories
             for subdir in ['modified', 'completed']:
@@ -271,10 +293,28 @@ def create_app(config_class=Config):
                             file_path = os.path.join(subdir_path, filename)
                             stat = os.stat(file_path)
                             
+                            # Parse new filename format: {workspace_name}_{annotator_name}_{base}_completed_{timestamp}.jsonl
+                            workspace_name = subdir.capitalize()  # fallback
+                            annotator_name = 'unknown_user'  # fallback
+                            
+                            # Try to parse the new filename format
+                            if filename.count('_') >= 4:  # workspace_annotator_base_completed_timestamp.jsonl
+                                parts = filename.replace('.jsonl', '').split('_')
+                                if len(parts) >= 5 and 'completed' in parts:
+                                    workspace_name = parts[0]
+                                    annotator_name = parts[1]
+                            else:
+                                # Fallback: try old logic for existing files
+                                for ws_id, ws_name in workspace_names.items():
+                                    if ws_id in filename or ws_name.lower() in filename.lower():
+                                        workspace_name = ws_name
+                                        break
+                            
                             files.append({
                                 'id': f"{subdir}_{filename}",
                                 'name': filename,
-                                'workspace': subdir.capitalize(),
+                                'workspace': workspace_name,
+                                'annotator': annotator_name,
                                 'created_at': datetime.fromtimestamp(stat.st_mtime).isoformat(),
                                 'size': stat.st_size,
                                 'format': 'jsonl',
@@ -325,20 +365,11 @@ def create_app(config_class=Config):
             if not os.path.exists(file_path):
                 return jsonify({'error': 'File not found'}), 404
             
-            # Read and parse first few lines for preview
-            preview_data = []
+            # Read raw file content for JSONL display
             with open(file_path, 'r', encoding='utf-8') as f:
-                for i, line in enumerate(f):
-                    if i >= 10:  # Limit to first 10 lines
-                        break
-                    try:
-                        import json
-                        data = json.loads(line.strip())
-                        preview_data.append(data)
-                    except json.JSONDecodeError:
-                        continue
+                content = f.read()
             
-            return jsonify(preview_data)
+            return content, 200, {'Content-Type': 'text/plain; charset=utf-8'}
         except Exception as e:
             return jsonify({'error': str(e)}), 500
 
@@ -411,15 +442,32 @@ def create_app(config_class=Config):
             if not content:
                 return jsonify({'error': 'No content provided'}), 400
             
+            # Get workspace info from session
+            workspace_id = session.get('workspace_id', 'unknown')
+            member_name = session.get('member_name', 'unknown_user')
+            
+            # Get workspace name from CollaborationService
+            workspace_name = 'unknown_workspace'
+            try:
+                from backend.services.collaboration_service import CollaborationService
+                collab_service = CollaborationService()
+                workspaces = collab_service.list_workspaces()
+                for workspace in workspaces:
+                    if workspace['id'] == workspace_id:
+                        workspace_name = workspace['name']
+                        break
+            except Exception as e:
+                print(f"⚠️ 워크스페이스 이름 조회 실패: {e}")
+            
             # Create exports/completed directory if it doesn't exist
             exports_dir = os.path.join(os.getcwd(), 'exports')
             completed_dir = os.path.join(exports_dir, 'completed')
             os.makedirs(completed_dir, exist_ok=True)
             
-            # Generate unique filename with timestamp
+            # Generate unique filename with workspace and annotator info
             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
             base_name = filename.replace('.jsonl', '')
-            save_filename = f"{base_name}_completed_{timestamp}.jsonl"
+            save_filename = f"{workspace_name}_{member_name}_{base_name}_completed_{timestamp}.jsonl"
             file_path = os.path.join(completed_dir, save_filename)
             
             # Save file
@@ -430,6 +478,8 @@ def create_app(config_class=Config):
                 'success': True,
                 'filename': save_filename,
                 'filepath': file_path,
+                'workspace': workspace_name,
+                'annotator': member_name,
                 'message': f'완성된 파일이 서버에 저장되었습니다: {save_filename}'
             })
             
