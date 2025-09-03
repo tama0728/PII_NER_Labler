@@ -1090,7 +1090,7 @@
                     <button class="btn primary" onclick="saveCurrentTask()" id="saveTaskBtn" style="display: none;">💾 Save Task</button>
                     <button class="btn" onclick="exportAnnotations()">Export</button>
                 </div>
-                <button class="btn" onclick="clearAnnotations()" style="background-color: #dc3545; color: white; margin-left: auto;">워크스페이스 초기화</button>
+                <button class="btn" onclick="resetWorkspace()" style="background-color: #dc3545; color: white; margin-left: auto;">워크스페이스 초기화</button>
             </div>
         </div>
 
@@ -2103,7 +2103,7 @@ ${options}
 (이미 저장된 파일은 안전합니다)`);
                     
                     if (shouldReset) {
-                        resetWorkspace();
+                        resetWorkspace(true); // Skip confirmation since user already confirmed
                     }
                 } else {
                     throw new Error(result.error || '서버 저장 실패');
@@ -2116,8 +2116,19 @@ ${options}
         }
         
         // Reset workspace to initial state for next work
-        function resetWorkspace() {
+        function resetWorkspace(skipConfirmation = false) {
             try {
+                // Show confirmation dialog unless skipped (e.g., called after export)
+                if (!skipConfirmation) {
+                    const shouldReset = confirm(`🔄 워크스페이스를 초기화하시겠습니까?
+
+⚠️ 초기화하면 현재 로드된 모든 태스크와 어노테이션이 삭제됩니다.
+(저장하지 않은 작업은 손실될 수 있습니다)`);
+                    
+                    if (!shouldReset) {
+                        return;
+                    }
+                }
                 // Clear all data
                 window.uploadedTasks = [];
                 annotations = [];
