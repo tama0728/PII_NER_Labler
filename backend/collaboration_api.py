@@ -98,6 +98,11 @@ def enter_workspace(workspace_id):
     session['workspace_id'] = workspace_id
     session['member_name'] = member_name
     
+    # Debug logging
+    print(f"DEBUG enter_workspace: Setting session for {member_name}")
+    print(f"DEBUG session keys after setting: {list(session.keys())}")
+    print(f"DEBUG session['member_name']: {session.get('member_name')}")
+    
     return jsonify({
         'message': f'Entered workspace as {member_name}',
         'workspace_id': workspace_id,

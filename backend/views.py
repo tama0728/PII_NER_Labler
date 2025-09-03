@@ -65,6 +65,12 @@ def workspace_annotate(workspace_id):
         # Get member name from session (set when joining workspace)
         member_name = session.get('member_name', 'Anonymous')
         
+        # Debug logging
+        print(f"DEBUG workspace_annotate: workspace_id={workspace_id}")
+        print(f"DEBUG session keys: {list(session.keys())}")
+        print(f"DEBUG member_name from session: {member_name}")
+        print(f"DEBUG session.get('member_name'): {session.get('member_name')}")
+        
         return render_template('workspace_ner_interface.html', 
                              workspace_id=workspace_id,
                              labels=labels,
