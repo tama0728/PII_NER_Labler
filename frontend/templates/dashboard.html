@@ -1,45 +1,78 @@
 {% extends "base.html" %}
 
 {% block content %}
-<!-- Project List View -->
-<div id="project-list-view">
+<!-- Export Files Dashboard -->
+<div id="export-dashboard">
     <div class="dashboard-header">
-        <h2>Your Projects</h2>
-        <button onclick="showCreateProjectModal()">Create New Project</button>
+        <h2>Dashboard</h2>
+        <div class="dashboard-actions">
+            <a href="../collaborate" class="nav-button">🤝 Collaborate</a>
+            <button onclick="refreshExportList()">Refresh</button>
+        </div>
     </div>
     
-    <div id="project-list"></div>
+    <div class="workspace-filter">
+        <label for="workspace-select">워크스페이스:</label>
+        <select id="workspace-select">
+            <option value="">전체</option>
+        </select>
+    </div>
+    
+    <div id="file-list">
+        <ul id="file-items"></ul>
+    </div>
 </div>
 
-<!-- Project Dashboard -->
-<div id="project-dashboard" style="display: none;">
-    <div class="project-header">
-        <button onclick="projectManager.backToProjectList()">← Back to Projects</button>
-        <h2 id="project-name"></h2>
-        <p id="project-description"></p>
-    </div>
-    
-    <div class="project-stats-grid">
-        <div class="stat-card">
-            <h3>Total Tasks</h3>
-            <span id="total-tasks">0</span>
+<!-- Export File Details Modal -->
+<div id="file-details-modal" class="modal" style="display: none;">
+    <div class="modal-content large">
+        <div class="modal-header">
+            <h3 id="file-name"></h3>
+            <button onclick="hideFileDetailsModal()">&times;</button>
         </div>
-        <div class="stat-card">
-            <h3>Completed</h3>
-            <span id="completed-tasks">0</span>
+        <div class="file-details">
+            <div class="detail-section">
+                <h4>File Information</h4>
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <label>Workspace:</label>
+                        <span id="detail-workspace"></span>
+                    </div>
+                    <div class="detail-item">
+                        <label>Export Date:</label>
+                        <span id="detail-date"></span>
+                    </div>
+                    <div class="detail-item">
+                        <label>File Size:</label>
+                        <span id="detail-size"></span>
+                    </div>
+                    <div class="detail-item">
+                        <label>Format:</label>
+                        <span id="detail-format"></span>
+                    </div>
+                    <div class="detail-item">
+                        <label>Records:</label>
+                        <span id="detail-records"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="detail-section">
+                <h4>Actions</h4>
+                <div class="file-actions">
+                    <button onclick="downloadFile()" class="btn-primary">Download</button>
+                    <button onclick="previewFile()" class="btn-secondary">Preview</button>
+                    <button onclick="deleteFile()" class="btn-danger">Delete</button>
+                </div>
+            </div>
+            <div class="detail-section" id="preview-section" style="display: none;">
+                <h4>Preview</h4>
+                <div id="file-preview" class="file-preview"></div>
+            </div>
         </div>
-        <div class="stat-card">
-            <h3>Progress</h3>
-            <span id="completion-rate">0%</span>
-        </div>
-    </div>
-    
-    <div class="project-actions">
-        <button onclick="loadTaskList()">View Tasks</button>
-        <button onclick="showImportModal()">Import Data</button>
-        <button onclick="exportProject()">Export Project</button>
     </div>
 </div>
+    
+
 
 <!-- Create Project Modal -->
 <div id="create-project-modal" class="modal" style="display: none;">
@@ -61,59 +94,259 @@
 <script>
 // Initialize dashboard
 document.addEventListener('DOMContentLoaded', function() {
-    if (window.authManager && window.authManager.currentUser) {
-        projectManager.loadProjects();
-    }
+    loadExportedFiles();
+    setupFilters();
 });
 
-// Login form handler
-document.getElementById('login-form').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    const username = document.getElementById('username').value;
-    const password = document.getElementById('password').value;
+// Export file management
+let currentFiles = [];
+let filteredFiles = [];
+
+
+async function loadExportedFiles() {
+    try {
+        const response = await fetch('/api/exports');
+        const data = await response.json();
+        currentFiles = data.files || [];
+        filteredFiles = [...currentFiles];
+        updateStats();
+        populateWorkspaceFilter();
+        renderFileList();
+    } catch (error) {
+        console.error('Error loading exported files:', error);
+        showMessage('Error loading files', 'error');
+    }
+}
+
+function updateStats() {
+    // 통계 업데이트는 제거됨 (UI 요소 삭제)
+}
+
+function populateWorkspaceFilter() {
+    const workspaces = [...new Set(currentFiles.map(file => file.workspace))];
+    const select = document.getElementById('workspace-select');
+    select.innerHTML = '<option value="">전체</option>';
+    workspaces.forEach(workspace => {
+        const option = document.createElement('option');
+        option.value = workspace;
+        option.textContent = workspace;
+        select.appendChild(option);
+    });
+}
+
+function setupFilters() {
+    document.getElementById('workspace-select').addEventListener('change', applyFilters);
+}
+
+function applyFilters() {
+    const workspaceFilter = document.getElementById('workspace-select').value;
     
-    const success = await authManager.login(username, password);
-    if (success) {
-        projectManager.loadProjects();
-    } else {
-        alert('Invalid credentials');
-    }
-});
-
-// Create project form handler
-document.getElementById('create-project-form').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    const name = document.getElementById('new-project-name').value;
-    const description = document.getElementById('new-project-description').value;
+    filteredFiles = currentFiles.filter(file => {
+        if (workspaceFilter && file.workspace !== workspaceFilter) return false;
+        return true;
+    });
     
-    const success = await projectManager.createProject(name, description);
-    if (success) {
-        hideCreateProjectModal();
-        document.getElementById('create-project-form').reset();
+    updateStats();
+    renderFileList();
+}
+
+function renderFileList() {
+    const container = document.getElementById('file-items');
+    
+    if (filteredFiles.length === 0) {
+        container.innerHTML = '<li class="no-files">파일이 없습니다</li>';
+        return;
     }
-});
-
-function showCreateProjectModal() {
-    document.getElementById('create-project-modal').style.display = 'block';
+    
+    container.innerHTML = filteredFiles.map(file => 
+        '<li class="file-item" onclick="showFileDetails(\'' + file.id + '\')">' +
+            '<span class="file-name">' + file.name + '</span>' +
+            '<span class="workspace-tag">' + file.workspace + '</span>' +
+        '</li>'
+    ).join('');
 }
 
-function hideCreateProjectModal() {
-    document.getElementById('create-project-modal').style.display = 'none';
+function showFileDetails(fileId) {
+    const file = currentFiles.find(f => f.id === fileId);
+    if (!file) return;
+    
+    document.getElementById('file-name').textContent = file.name;
+    document.getElementById('detail-workspace').textContent = file.workspace;
+    document.getElementById('detail-date').textContent = formatDateTime(file.created_at);
+    document.getElementById('detail-size').textContent = formatFileSize(file.size);
+    document.getElementById('detail-format').textContent = file.format.toUpperCase();
+    document.getElementById('detail-records').textContent = file.record_count || 'N/A';
+    
+    window.currentFileDetails = file;
+    document.getElementById('file-details-modal').style.display = 'block';
 }
 
-function showImportModal() {
-    // TODO: Implement data import modal
-    alert('Data import feature coming soon!');
+function hideFileDetailsModal() {
+    document.getElementById('file-details-modal').style.display = 'none';
+    document.getElementById('preview-section').style.display = 'none';
 }
 
-function loadTaskList() {
-    // TODO: Implement task list view
-    alert('Task list view coming soon!');
+async function downloadFile() {
+    if (!window.currentFileDetails) return;
+    
+    try {
+        const response = await fetch('/api/exports/' + window.currentFileDetails.id + '/download');
+        if (!response.ok) throw new Error('Download failed');
+        
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = window.currentFileDetails.name;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+    } catch (error) {
+        console.error('Download error:', error);
+        showMessage('Download failed', 'error');
+    }
 }
 
-function exportProject() {
-    // TODO: Implement project export
-    alert('Export feature coming soon!');
+async function downloadFileById(fileId) {
+    const file = currentFiles.find(f => f.id === fileId);
+    if (!file) return;
+    
+    try {
+        const response = await fetch('/api/exports/' + fileId + '/download');
+        if (!response.ok) throw new Error('Download failed');
+        
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = file.name;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+    } catch (error) {
+        console.error('Download error:', error);
+        showMessage('Download failed', 'error');
+    }
+}
+
+async function previewFile() {
+    if (!window.currentFileDetails) return;
+    
+    try {
+        const response = await fetch('/api/exports/' + window.currentFileDetails.id + '/preview');
+        if (!response.ok) throw new Error('Preview failed');
+        
+        const data = await response.json();
+        const previewContainer = document.getElementById('file-preview');
+        
+        if (window.currentFileDetails.format === 'json') {
+            previewContainer.innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+        } else if (window.currentFileDetails.format === 'csv') {
+            const table = document.createElement('table');
+            table.className = 'preview-table';
+            
+            if (data.length > 0) {
+                const headerRow = table.insertRow();
+                Object.keys(data[0]).forEach(key => {
+                    const th = document.createElement('th');
+                    th.textContent = key;
+                    headerRow.appendChild(th);
+                });
+                
+                data.slice(0, 10).forEach(row => {
+                    const tr = table.insertRow();
+                    Object.values(row).forEach(value => {
+                        const td = tr.insertCell();
+                        td.textContent = value;
+                    });
+                });
+                
+                if (data.length > 10) {
+                    const infoRow = table.insertRow();
+                    const td = infoRow.insertCell();
+                    td.colSpan = Object.keys(data[0]).length;
+                    td.textContent = '... and ' + (data.length - 10) + ' more rows';
+                    td.className = 'preview-info';
+                }
+            }
+            previewContainer.appendChild(table);
+        }
+        
+        document.getElementById('preview-section').style.display = 'block';
+    } catch (error) {
+        console.error('Preview error:', error);
+        showMessage('Preview failed', 'error');
+    }
+}
+
+async function deleteFile() {
+    if (!window.currentFileDetails) return;
+    
+    if (!confirm('Are you sure you want to delete "' + window.currentFileDetails.name + '"?')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/exports/' + window.currentFileDetails.id, {
+            method: 'DELETE'
+        });
+        
+        if (!response.ok) throw new Error('Delete failed');
+        
+        showMessage('File deleted successfully', 'success');
+        hideFileDetailsModal();
+        loadExportedFiles();
+    } catch (error) {
+        console.error('Delete error:', error);
+        showMessage('Delete failed', 'error');
+    }
+}
+
+async function refreshExportList() {
+    await loadExportedFiles();
+    showMessage('File list refreshed', 'success');
+}
+
+
+
+function formatDate(dateString) {
+    return new Date(dateString).toLocaleDateString();
+}
+
+function formatDateTime(dateString) {
+    return new Date(dateString).toLocaleString();
+}
+
+function formatFileSize(bytes) {
+    if (!bytes) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+function showMessage(message, type) {
+    type = type || 'info';
+    const toast = document.createElement('div');
+    toast.className = 'toast toast-' + type;
+    toast.textContent = message;
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(function() {
+        toast.classList.add('show');
+    }, 10);
+    
+    setTimeout(function() {
+        toast.classList.remove('show');
+        setTimeout(function() {
+            if (document.body.contains(toast)) {
+                document.body.removeChild(toast);
+            }
+        }, 300);
+    }, 3000);
 }
 </script>
 {% endblock %}

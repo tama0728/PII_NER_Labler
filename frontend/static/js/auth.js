@@ -34,18 +34,12 @@ class AuthManager {
     }
 
     async checkAuthStatus() {
-        try {
-            const response = await fetch('/auth/me');
-            if (response.ok) {
-                const data = await response.json();
-                this.currentUser = data.user;
-                this.showDashboard();
-            } else {
-                this.showLogin();
-            }
-        } catch (error) {
-            this.showLogin();
-        }
+        // Skip authentication check for development/guest mode
+        this.currentUser = {
+            username: 'Guest',
+            role: 'User'
+        };
+        this.showDashboard();
     }
 
     showLogin() {
