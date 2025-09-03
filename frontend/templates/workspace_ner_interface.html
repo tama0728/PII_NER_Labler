@@ -1019,6 +1019,42 @@
             border-color: #2980b9;
         }
         
+        .task-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        
+        .task-status {
+            font-size: 16px;
+            line-height: 1;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+        
+        .task-content {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .task-saved {
+            border-left: 3px solid #28a745;
+        }
+        
+        .task-unsaved {
+            border-left: 3px solid #ffc107;
+        }
+        
+        .task-saved:hover {
+            background: #d4edda;
+            border-color: #c3e6cb;
+        }
+        
+        .task-unsaved:hover {
+            background: #fff3cd;
+            border-color: #ffeaa7;
+        }
+        
         .task-text {
             font-size: 13px;
             line-height: 1.4;
@@ -1088,7 +1124,7 @@
                     <button class="btn primary" onclick="loadText()">Load Text</button>
                     <button class="btn" onclick="showUploadModal()">📁 Upload Files</button>
                     <button class="btn primary" onclick="saveCurrentTask()" id="saveTaskBtn" style="display: none;">💾 Save Task</button>
-                    <button class="btn" onclick="exportAnnotations()">Export</button>
+                    <button class="btn" id="exportBtn" onclick="exportAnnotations()" disabled style="opacity: 0.5; cursor: not-allowed;">Export</button>
                 </div>
                 <button class="btn" onclick="resetWorkspace()" style="background-color: #dc3545; color: white; margin-left: auto;">워크스페이스 초기화</button>
             </div>
@@ -1597,8 +1633,9 @@
                     console.log('Saved task:', tasks[taskIndex]);
                 }
                 
-                // Update UI
+                // Update UI and check if all tasks are saved
                 updateTasksList();
+                checkAllTasksSaved();
                 
                 // Hide save button
                 document.getElementById('saveTaskBtn').style.display = 'none';
@@ -1622,6 +1659,38 @@
             } else {
                 saveBtn.style.display = 'none';
             }
+        }
+        
+        // Check if all tasks are saved and update Export button
+        function checkAllTasksSaved() {
+            const exportBtn = document.getElementById('exportBtn');
+            const allTasks = window.uploadedTasks;
+            
+            if (!allTasks || allTasks.length === 0) {
+                exportBtn.disabled = true;
+                exportBtn.style.opacity = '0.5';
+                exportBtn.style.cursor = 'not-allowed';
+                return;
+            }
+            
+            // Check if all tasks are saved
+            const allSaved = allTasks.every(task => task.saved === true);
+            
+            if (allSaved) {
+                exportBtn.disabled = false;
+                exportBtn.style.opacity = '1';
+                exportBtn.style.cursor = 'pointer';
+                exportBtn.title = '모든 태스크가 저장되어 Export 가능합니다.';
+            } else {
+                const savedCount = allTasks.filter(task => task.saved === true).length;
+                exportBtn.disabled = true;
+                exportBtn.style.opacity = '0.5';
+                exportBtn.style.cursor = 'not-allowed';
+                exportBtn.title = `${allTasks.length}개 태스크 중 ${savedCount}개만 저장됨. 모든 태스크를 저장해야 Export 가능합니다.`;
+            }
+            
+            // Update tasks list to show save status
+            updateTasksList();
         }
         
         // Handle text selection
@@ -2134,6 +2203,9 @@ ${options}
                 currentTask = null;
                 currentTaskId = null;
                 selectedLabel = null;
+                
+                // Reset Export button
+                checkAllTasksSaved();
                 
                 // Reset global state variables
                 nextSpanId = 1;
@@ -3332,6 +3404,7 @@ ${options}
                     if (allTasks.length > 0) {
                         window.uploadedTasks = (window.uploadedTasks || []).concat(allTasks);
                         updateTasksList();
+                        checkAllTasksSaved();
                         selectTask(allTasks[0].id);
                     }
                     
@@ -3404,6 +3477,7 @@ ${options}
             if (allTasks.length > 0) {
                 window.uploadedTasks = (window.uploadedTasks || []).concat(allTasks);
                 updateTasksList();
+                checkAllTasksSaved();
                 
                 // Load first task automatically
                 selectTask(allTasks[0].id);
@@ -3530,6 +3604,7 @@ ${options}
                 if (allTasks.length > 0) {
                     window.uploadedTasks = (window.uploadedTasks || []).concat(allTasks);
                     updateTasksList();
+                    checkAllTasksSaved();
                     selectTask(allTasks[0].id);
                     
                     alert(`✅ 수정된 파일이 저장되고 전처리가 완료되었습니다!\n📝 ${allTasks.length}개 태스크 생성됨\n첫 번째 태스크가 로드되었습니다.`);
@@ -3893,14 +3968,24 @@ ${options}
                 return;
             }
             
-            tasksList.innerHTML = tasks.map((task, index) => `
-                <div class="task-item" onclick="selectTask('${task.id}')" data-task-id="${task.id}">
-                    <div class="task-text">${task.text.length > 80 ? task.text.substring(0, 80) + '...' : task.text}</div>
-                    <div class="task-meta">
-                        <span>${task.filename} (${task.index})</span>
+            tasksList.innerHTML = tasks.map((task, index) => {
+                const saveStatus = task.saved ? '✅' : '⚠️';
+                const saveStatusTitle = task.saved ? '저장됨' : '미저장';
+                const saveStatusClass = task.saved ? 'task-saved' : 'task-unsaved';
+                
+                return `
+                <div class="task-item ${saveStatusClass}" onclick="selectTask('${task.id}')" data-task-id="${task.id}">
+                    <div class="task-status" title="${saveStatusTitle}">${saveStatus}</div>
+                    <div class="task-content">
+                        <div class="task-text">${task.text.length > 80 ? task.text.substring(0, 80) + '...' : task.text}</div>
+                        <div class="task-meta">
+                            <span>${task.filename} (${task.index})</span>
+                            ${task.saved ? `<small>저장: ${new Date(task.savedAt).toLocaleString()}</small>` : ''}
+                        </div>
                     </div>
                 </div>
-            `).join('');
+                `;
+            }).join('');
             
             // Auto-resize content areas after tasks are updated
             setTimeout(autoResizeContentAreas, 50);
@@ -4216,6 +4301,7 @@ ${options}
             // Initialize empty tasks
             window.uploadedTasks = [];
             updateTasksList();
+            checkAllTasksSaved();
             
 
         });
