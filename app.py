@@ -254,6 +254,115 @@ def create_app(config_class=Config):
     def ner_delete_tag_original(label_id):
         return ner_delete_tag(label_id)
 
+    # Export file management endpoints for dashboard
+    @app.route('/api/exports', methods=['GET'])
+    def get_exports():
+        """Get list of exported files"""
+        try:
+            files = []
+            exports_dir = os.path.join(os.getcwd(), 'exports')
+            
+            # Check both modified and completed directories
+            for subdir in ['modified', 'completed']:
+                subdir_path = os.path.join(exports_dir, subdir)
+                if os.path.exists(subdir_path):
+                    for filename in os.listdir(subdir_path):
+                        if filename.endswith('.jsonl'):
+                            file_path = os.path.join(subdir_path, filename)
+                            stat = os.stat(file_path)
+                            
+                            files.append({
+                                'id': f"{subdir}_{filename}",
+                                'name': filename,
+                                'workspace': subdir.capitalize(),
+                                'created_at': datetime.fromtimestamp(stat.st_mtime).isoformat(),
+                                'size': stat.st_size,
+                                'format': 'jsonl',
+                                'record_count': 'N/A'
+                            })
+            
+            return jsonify({'files': files})
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+
+    @app.route('/api/exports/<file_id>/download', methods=['GET'])
+    def download_export(file_id):
+        """Download exported file"""
+        try:
+            # Parse file_id (format: "subdir_filename")
+            parts = file_id.split('_', 1)
+            if len(parts) != 2:
+                return jsonify({'error': 'Invalid file ID'}), 400
+            
+            subdir, filename = parts
+            exports_dir = os.path.join(os.getcwd(), 'exports')
+            file_path = os.path.join(exports_dir, subdir.lower(), filename)
+            
+            if not os.path.exists(file_path):
+                return jsonify({'error': 'File not found'}), 404
+            
+            return send_from_directory(
+                os.path.join(exports_dir, subdir.lower()), 
+                filename, 
+                as_attachment=True
+            )
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+
+    @app.route('/api/exports/<file_id>/preview', methods=['GET'])
+    def preview_export(file_id):
+        """Preview exported file content"""
+        try:
+            # Parse file_id (format: "subdir_filename")
+            parts = file_id.split('_', 1)
+            if len(parts) != 2:
+                return jsonify({'error': 'Invalid file ID'}), 400
+            
+            subdir, filename = parts
+            exports_dir = os.path.join(os.getcwd(), 'exports')
+            file_path = os.path.join(exports_dir, subdir.lower(), filename)
+            
+            if not os.path.exists(file_path):
+                return jsonify({'error': 'File not found'}), 404
+            
+            # Read and parse first few lines for preview
+            preview_data = []
+            with open(file_path, 'r', encoding='utf-8') as f:
+                for i, line in enumerate(f):
+                    if i >= 10:  # Limit to first 10 lines
+                        break
+                    try:
+                        import json
+                        data = json.loads(line.strip())
+                        preview_data.append(data)
+                    except json.JSONDecodeError:
+                        continue
+            
+            return jsonify(preview_data)
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+
+    @app.route('/api/exports/<file_id>', methods=['DELETE'])
+    def delete_export(file_id):
+        """Delete exported file"""
+        try:
+            # Parse file_id (format: "subdir_filename")
+            parts = file_id.split('_', 1)
+            if len(parts) != 2:
+                return jsonify({'error': 'Invalid file ID'}), 400
+            
+            subdir, filename = parts
+            exports_dir = os.path.join(os.getcwd(), 'exports')
+            file_path = os.path.join(exports_dir, subdir.lower(), filename)
+            
+            if not os.path.exists(file_path):
+                return jsonify({'error': 'File not found'}), 404
+            
+            os.remove(file_path)
+            return jsonify({'message': 'File deleted successfully'})
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+
     # File save endpoints
     @app.route('/api/save-modified-file', methods=['POST'])
     def save_modified_file():
