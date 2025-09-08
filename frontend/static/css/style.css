@@ -221,8 +221,8 @@ body {
     border-radius: 12px;
 }
 
-.file-actions {
-    position: absolute;
+.export-card .file-actions {
+    position: relative;
     top: 1rem;
     right: 1rem;
     opacity: 0;
@@ -284,16 +284,25 @@ body {
     padding: 2rem;
     max-width: 500px;
     width: 90%;
-    max-height: 90vh;
-    overflow-y: auto;
+    max-height: 80vh;
+    overflow: hidden; /* keep rounded corners visible */
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
     transform: translateY(20px);
     animation: slideUp 0.2s forwards;
+    display: flex;
+    flex-direction: column;
 }
 
 .modal-content.large {
     max-width: 1200px;
     width: 95%;
+}
+
+/* make inner details area scrollable so outer keeps border-radius */
+.modal-content .file-details {
+    overflow-y: auto;
+    max-height: calc(80vh - 100px);
+    scrollbar-gutter: stable;
 }
 
 @keyframes slideUp {
@@ -401,6 +410,7 @@ body {
     color: #2c3e50;
     margin-bottom: 1rem;
     font-size: 1.1rem;
+    scrollbar-gutter: stable;
 }
 
 .detail-grid {
@@ -442,6 +452,10 @@ body {
     transition: all 0.2s ease;
 }
 
+.btn-ico {
+    margin-right: 0.5rem;
+}
+
 /* Preview Section */
 .file-preview {
     background: #f8f9fa;
@@ -450,6 +464,7 @@ body {
     padding: 1rem;
     max-height: 500px;
     overflow-y: auto;
+    scrollbar-gutter: stable;
 }
 
 .file-preview pre {
@@ -984,4 +999,10 @@ body {
     text-decoration: none !important;
     color: white !important;
     background: linear-gradient(135deg, #218838 0%, #1ea080 100%);
+}
+
+/* Keep preview toggle button width stable across label changes */
+#preview-toggle-btn {
+    min-width: 170px;
+    white-space: nowrap;
 }

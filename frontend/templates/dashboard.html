@@ -53,9 +53,9 @@
             <div class="detail-section">
                 <h4>Actions</h4>
                 <div class="file-actions">
-                    <button onclick="viewJsonlFile()" class="btn-primary">View JSONL</button>
-                    <button onclick="downloadFile()" class="btn-secondary">Download</button>
-                    <button onclick="deleteFile()" class="btn-danger">Delete</button>
+                    <button id="preview-toggle-btn" onclick="togglePreview()" class="btn-primary" aria-expanded="false"><span class="btn-ico">🗂️</span>Show Preview</button>
+                    <button onclick="downloadFile()" class="btn-secondary"><span class="btn-ico">⬇️</span>Download</button>
+                    <button onclick="deleteFile()" class="btn-danger"><span class="btn-ico">🗑️</span>Delete</button>
                 </div>
             </div>
             <div class="detail-section" id="preview-section" style="display: none;">
@@ -183,12 +183,14 @@ function showFileDetails(fileId) {
     document.getElementById('detail-date').textContent = formatDateTime(file.created_at);
     
     window.currentFileDetails = file;
+    // Reset preview UI state for newly opened file
+    resetPreviewUI();
     document.getElementById('file-details-modal').style.display = 'block';
 }
 
 function hideFileDetailsModal() {
     document.getElementById('file-details-modal').style.display = 'none';
-    document.getElementById('preview-section').style.display = 'none';
+    resetPreviewUI();
 }
 
 async function downloadFile() {
@@ -269,10 +271,47 @@ async function viewJsonlFile() {
         
         previewContainer.innerHTML = formattedContent;
         document.getElementById('preview-section').style.display = 'block';
+        setPreviewButton(true);
     } catch (error) {
         console.error('JSONL file load error:', error);
         showMessage('Failed to load file', 'error');
     }
+}
+
+function togglePreview() {
+    const section = document.getElementById('preview-section');
+    if (!section) return;
+    const isOpen = section.style.display !== 'none';
+    if (isOpen) {
+        section.style.display = 'none';
+        setPreviewButton(false);
+    } else {
+        const hasContent = document.getElementById('file-preview').innerHTML.trim().length > 0;
+        if (!hasContent) {
+            // Load content then show
+            viewJsonlFile();
+        } else {
+            section.style.display = 'block';
+            setPreviewButton(true);
+        }
+    }
+}
+
+function resetPreviewUI() {
+    const section = document.getElementById('preview-section');
+    const container = document.getElementById('file-preview');
+    if (section) section.style.display = 'none';
+    if (container) container.innerHTML = '';
+    setPreviewButton(false);
+}
+
+function setPreviewButton(isOpen) {
+    const btn = document.getElementById('preview-toggle-btn');
+    if (!btn) return;
+    btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    btn.innerHTML = isOpen
+        ? '<span class="btn-ico">🙈</span>Hide Preview'
+        : '<span class="btn-ico">🗂️</span>Show Preview';
 }
 
 async function deleteFile() {

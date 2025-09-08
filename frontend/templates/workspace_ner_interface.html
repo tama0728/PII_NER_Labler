@@ -2207,9 +2207,23 @@ ${options}
                 
                 const result = await response.json();
                 if (result.success) {
+                    // Create a download blob and trigger download
+                    const blob = new Blob([jsonlContent], { type: 'application/json' });
+                    const downloadUrl = window.URL.createObjectURL(blob);
+                    const downloadLink = document.createElement('a');
+                    downloadLink.href = downloadUrl;
+                    downloadLink.download = filename;
+                    
+                    // Trigger download
+                    document.body.appendChild(downloadLink);
+                    downloadLink.click();
+                    document.body.removeChild(downloadLink);
+                    window.URL.revokeObjectURL(downloadUrl);
+                    
                     // Show success message
-                    alert(`✅ 저장된 ${savedTasks.length}개 태스크가 서버에 저장되었습니다!
-📁 파일명: ${result.filename}`);
+                    alert(`✅ 저장된 ${savedTasks.length}개 태스크가 완료되었습니다!
+📁 서버 저장: ${result.filename}
+💾 로컬 다운로드: ${filename}`);
                     
                     // Ask user if they want to reset the workspace for next work
                     const shouldReset = confirm(`🔄 내보내기가 완료되었습니다!
