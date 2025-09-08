@@ -3862,13 +3862,14 @@ ${options}
             const textAnnotations = [];  // 각 텍스트에 대한 annotation 정보
             const textLabels = [];  // 각 텍스트별 라벨 저장
             const textMetadata = [];  // 각 텍스트별 원본 메타데이터 저장
-            
+            let itemLabels; // 이 텍스트의 라벨들과 색상
             try {
                 // JSONL 처리 - 각 줄이 별도의 JSON 객체
                 const lines = content.trim().split('\n');
                 lines.forEach((line, lineNum) => {
                     if (line.trim()) {
                         try {
+                            
                             const data = JSON.parse(line);
                             if (typeof data === 'string') {
                                 texts.push(data.trim());
@@ -3891,17 +3892,23 @@ ${options}
                                     // Process entities and convert to annotation format
                                     const annotations = [];
                                     const itemLabels = new Map(); // 이 텍스트의 라벨들과 색상
+                                    fetch('/static/tag.json')
+                                        .then(response => response.json())
+                                        .then(data => {
+                                            data.forEach(item => {
+                                                itemLabels.set(item.value, item.background);
+                                                labels.add(item.value);
+                                            });
+                                        });
                                     if (Array.isArray(data.entities)) {
                                         data.entities.forEach((entity, index) => {
                                             if (entity && typeof entity === 'object' && entity.entity_type) {
-                                                console.log('entity.entity_type:', entity.entity_type);
-                                                console.log('entity.entity_type.type:', entity.entity_type.type);
                                                 //labels.add(entity.entity_type); // 전체 라벨 세트에 추가
                                                 
                                                 // 이 텍스트에서 처음 보는 라벨이면 색상 할당
-                                                //if (!itemLabels.has(entity.entity_type)) {
-                                                //    itemLabels.set(entity.entity_type, getRandomColor());
-                                                //}
+                                                if (!itemLabels.has(entity.entity_type)) {
+                                                    itemLabels.set(entity.entity_type, getRandomColor());
+                                                }
                                                 
                                                 // Convert to internal annotation format
                                                 annotations.push({
