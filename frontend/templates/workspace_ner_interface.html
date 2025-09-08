@@ -182,9 +182,9 @@
         .labels-header-buttons .filter-clear-btn {
             padding: 6px 12px;
             font-size: 12px;
-            background: #6c757d;
-            color: white;
-            border: 1px solid #6c757d;
+            background: #28a745; 
+            color: white; 
+            border: 1px solid #28a745;
             border-radius: 3px;
             cursor: pointer;
             height: 32px;
@@ -198,6 +198,9 @@
         .labels-header-buttons .add-label-btn {
             padding: 6px 12px;
             font-size: 12px;
+            background: #28a745; 
+            color: white; 
+            border: 1px solid #28a745;
             border-radius: 3px;
             cursor: pointer;
             height: 32px;
@@ -639,25 +642,6 @@
             background-size: 100% 100%;
         }
         
-        .filter-clear-btn {
-            width: 100%;
-            padding: 6px 12px;
-            margin-bottom: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 3px;
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            cursor: pointer;
-            font-size: 12px;
-            font-weight: 500;
-            transition: all 0.15s ease;
-        }
-        
-        .filter-clear-btn:hover {
-            /* Hover 효과 제거 - 변화 없음 */
-            background: rgba(255, 255, 255, 0.1);
-            border-color: rgba(255, 255, 255, 0.3);
-        }
         
         .annotation::before {
             content: attr(data-labels);
@@ -799,6 +783,11 @@
         .btn-secondary:hover {
             background: #545b62;
             border-color: #545b62;
+        }
+
+        .filter-clear-btn:hover {
+            background: #218838 !important;
+            border-color: #218838 !important;
         }
         
         .add-label-btn:hover {
@@ -1148,8 +1137,8 @@
                     2️⃣ 두 번째 어노테이션 Ctrl+클릭 (연결 완료)
                 </small>
                 <div class="labels-header-buttons">
-                    <button class="filter-clear-btn" onclick="clearAllFilters()">Clear All Filters</button>
-                    <button class="btn add-label-btn" onclick="openAddLabelModal()" style="background: #28a745; color: white; border: 1px solid #28a745;">+ Add New Label</button>
+                    <button class="btn filter-clear-btn" onclick="clearAllFilters()">Clear All Filters</button>
+                    <!-- <button class="btn add-label-btn" onclick="openAddLabelModal()" >+ Add New Label</button> -->
                 </div>
             </div>
             <div class="labels-panel-horizontal">
@@ -3905,12 +3894,14 @@ ${options}
                                     if (Array.isArray(data.entities)) {
                                         data.entities.forEach((entity, index) => {
                                             if (entity && typeof entity === 'object' && entity.entity_type) {
-                                                labels.add(entity.entity_type); // 전체 라벨 세트에 추가
+                                                console.log('entity.entity_type:', entity.entity_type);
+                                                console.log('entity.entity_type.type:', entity.entity_type.type);
+                                                //labels.add(entity.entity_type); // 전체 라벨 세트에 추가
                                                 
                                                 // 이 텍스트에서 처음 보는 라벨이면 색상 할당
-                                                if (!itemLabels.has(entity.entity_type)) {
-                                                    itemLabels.set(entity.entity_type, getRandomColor());
-                                                }
+                                                //if (!itemLabels.has(entity.entity_type)) {
+                                                //    itemLabels.set(entity.entity_type, getRandomColor());
+                                                //}
                                                 
                                                 // Convert to internal annotation format
                                                 annotations.push({
