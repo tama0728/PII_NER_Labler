@@ -2154,10 +2154,10 @@ ${options}
                                 entity_type: annotation.labels && annotation.labels[0] ? annotation.labels[0] : '',
                                 start_offset: annotation.start,
                                 end_offset: annotation.end,
-                                span_id: '', // Always empty string to match original
-                                entity_id: '', // Always empty string to match original
-                                annotator: '', // Always empty string to match original
-                                identifier_type: '' // Always empty string to match original
+                                span_id: annotation.span_id,
+                                entity_id: annotation.entity_id,
+                                annotator: annotation.annotator,
+                                identifier_type: annotation.identifier_type
                             });
                         });
                     }
@@ -3025,7 +3025,7 @@ ${options}
                 const parsedData = JSON.parse(jsonString);
                 
                 // 필수 필드 검증
-                const requiredFields = ['span_text', 'entity_type', 'start_offset', 'end_offset', 'span_id', 'entity_id', 'annotator', 'identifier_type'];
+                const requiredFields = ['text', 'entity_type', 'start_offset', 'end_offset', 'span_id', 'entity_id', 'annotator', 'identifier_type'];
                 for (const field of requiredFields) {
                     if (!(field in parsedData)) {
                         throw new Error(`필수 필드가 누락되었습니다: ${field}`);
@@ -3033,7 +3033,7 @@ ${options}
                 }
                 
                 // 어노테이션 객체 업데이트
-                selectedAnnotation.text = parsedData.span_text;
+                selectedAnnotation.text = parsedData.text;
                 selectedAnnotation.labels = [parsedData.entity_type]; // 단일 라벨로 처리
                 selectedAnnotation.start = parseInt(parsedData.start_offset);
                 selectedAnnotation.end = parseInt(parsedData.end_offset);
@@ -3167,50 +3167,11 @@ ${options}
             handleAnnotationClick(annotationIndex);
         }
         
-        // JSON 편집 기능
-        function handleJSONEdit(jsonText) {
-            if (!selectedAnnotation) return;
-            
-            try {
-                const parsedData = JSON.parse(jsonText);
-                
-                // 기본 필드 검증
-                if (typeof parsedData.text !== 'string' ||
-                    !Array.isArray(parsedData.labels) ||
-                    typeof parsedData.start_offset !== 'number' ||
-                    typeof parsedData.end_offset !== 'number') {
-                    throw new Error('필수 필드가 누락되었거나 잘못된 형식입니다.');
-                }
-                
-                // annotation 객체 업데이트
-                selectedAnnotation.text = parsedData.text;
-                selectedAnnotation.labels = parsedData.labels;
-                selectedAnnotation.start = parsedData.start_offset;
-                selectedAnnotation.end = parsedData.end_offset;
-                selectedAnnotation.span_id = parsedData.span_id || '';
-                selectedAnnotation.entity_id = parsedData.entity_id || '';
-                selectedAnnotation.identifier_type = parsedData.identifier_type || 'default';
-                selectedAnnotation.annotator = parsedData.annotator || currentAnnotator;
-                
-                // UI 필드들 업데이트
-                updateUIFromAnnotation(selectedAnnotation);
-                
-                // 성공 피드백
-                showJSONFeedback(true);
-                
-                // 어노테이션 다시 렌더링
-                renderAnnotations();
-                updateStats();
-                
-            } catch (error) {
-                console.error('JSON 파싱 오류:', error);
-                showJSONFeedback(false, error.message);
-            }
-        }
         
         function updateUIFromAnnotation(annotation) {
             document.getElementById('selectedText').value = annotation.text || '';
             document.getElementById('entityType').value = annotation.labels ? annotation.labels.join(', ') : '';
+            <!-- document.getElementById('entityType').value = annotation.labels || ''; -->
             document.getElementById('identifierType').value = annotation.identifier_type || 'default';
             document.getElementById('annotator').value = annotation.annotator || currentAnnotator;
             document.getElementById('spanId').value = annotation.span_id || '';
