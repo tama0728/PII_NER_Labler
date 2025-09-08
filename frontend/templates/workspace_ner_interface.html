@@ -1204,12 +1204,6 @@
 
                 </div>
                 
-
-                
-
-                
-
-                
                 <div class="field-group">
                     <label>메타데이터 (metadata):</label>
                     <textarea id="metadata" readonly style="background: #f8f9fa; color: #666; border: 1px solid #e8e8e8; padding: 8px; border-radius: 3px; font-size: 12px; resize: vertical; min-height: 80px; font-family: monospace; width: 100%; box-sizing: border-box;" placeholder="메타데이터가 표시됩니다..."></textarea>
@@ -1490,6 +1484,35 @@
         
         // Label selection
         function selectLabel(labelValue) {
+            // If an annotation is selected, clicking a label updates its tag
+            if (selectedAnnotation) {
+                try {
+                    // Update the selected annotation's label (use single primary label)
+                    selectedAnnotation.labels = [labelValue];
+
+                    // Re-render annotations and refresh details/JSON panel
+                    renderAnnotations();
+                    updateEntityDetailsPanel(selectedAnnotation);
+                    updateStatistics && updateStatistics();
+
+                    // Visually select this label for subsequent creations
+                    document.querySelectorAll('.label-item').forEach(btn => {
+                        btn.classList.remove('selected');
+                    });
+                    const targetLabelBtn = document.querySelector(`.label-item[data-label="${labelValue}"]`);
+                    if (targetLabelBtn) {
+                        targetLabelBtn.classList.add('selected');
+                    }
+                    selectedLabel = labelValue;
+
+                    // Show save button since task has changed
+                    showSaveButtonIfNeeded && showSaveButtonIfNeeded();
+                } catch (e) {
+                    console.error('Failed to update annotation label:', e);
+                }
+                return;
+            }
+
             // Check if the clicked label is already selected
             if (selectedLabel === labelValue) {
                 // Deselect if already selected
