@@ -216,7 +216,7 @@
             display: flex;
             gap: 8px;
             flex-wrap: wrap;
-            max-height: 120px;
+            /*max-height: 120px;*/
             overflow-y: auto;
         }
         
@@ -3404,7 +3404,7 @@ ${options}
                     for (let file of files) {
                         try {
                             const text = await file.text();
-                            const result = parseFileContent(text, file.name);
+                            const result = await parseFileContent(text, file.name);
                             const texts = result.texts;
                             const annotations = result.annotations;
                             const textLabels = result.textLabels;
@@ -3471,7 +3471,7 @@ ${options}
             for (let file of files) {
                 try {
                     const text = await file.text();
-                    const result = parseFileContent(text, file.name);
+                    const result = await parseFileContent(text, file.name);
                     const texts = result.texts;
                     const labels = result.labels;
                     const annotations = result.annotations;
@@ -3521,7 +3521,7 @@ ${options}
                 // For now, handle only the first file
                 const file = files[0];
                 const content = await file.text();
-                const result = parseFileContent(content, file.name);
+                const result = await parseFileContent(content, file.name);
                 
                 // Store original file data globally for later processing
                 window.originalFileData = {
@@ -3850,7 +3850,7 @@ ${options}
             return null; // Not found
         }
         
-        function parseFileContent(content, filename) {
+        async function parseFileContent(content, filename) {
             const extension = filename.split('.').pop().toLowerCase();
             
             if (extension !== 'jsonl') {
@@ -3862,7 +3862,7 @@ ${options}
             const textAnnotations = [];  // 각 텍스트에 대한 annotation 정보
             const textLabels = [];  // 각 텍스트별 라벨 저장
             const textMetadata = [];  // 각 텍스트별 원본 메타데이터 저장
-            let itemLabels; // 이 텍스트의 라벨들과 색상
+            const tagData = await fetch('/static/tag.json').then(response => response.json());
             try {
                 // JSONL 처리 - 각 줄이 별도의 JSON 객체
                 const lines = content.trim().split('\n');
@@ -3892,24 +3892,13 @@ ${options}
                                     // Process entities and convert to annotation format
                                     const annotations = [];
                                     const itemLabels = new Map(); // 이 텍스트의 라벨들과 색상
-                                    fetch('/static/tag.json')
-                                        .then(response => response.json())
-                                        .then(data => {
-                                            data.forEach(item => {
-                                                itemLabels.set(item.value, item.background);
-                                                labels.add(item.value);
-                                            });
-                                        });
+                                    tagData.forEach(item => {
+                                        itemLabels.set(item.value, item.background);
+                                        labels.add(item.value);
+                                    });
                                     if (Array.isArray(data.entities)) {
                                         data.entities.forEach((entity, index) => {
                                             if (entity && typeof entity === 'object' && entity.entity_type) {
-                                                //labels.add(entity.entity_type); // 전체 라벨 세트에 추가
-                                                
-                                                // 이 텍스트에서 처음 보는 라벨이면 색상 할당
-                                                if (!itemLabels.has(entity.entity_type)) {
-                                                    itemLabels.set(entity.entity_type, getRandomColor());
-                                                }
-                                                
                                                 // Convert to internal annotation format
                                                 annotations.push({
                                                     start: entity.start_offset || entity.start,
