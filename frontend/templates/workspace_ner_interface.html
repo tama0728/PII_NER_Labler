@@ -1203,23 +1203,11 @@
                     </select>
 
                 </div>
-                
-                <div class="field-group">
-                    <label>메타데이터 (metadata):</label>
-                    <textarea id="metadata" readonly style="background: #f8f9fa; color: #666; border: 1px solid #e8e8e8; padding: 8px; border-radius: 3px; font-size: 12px; resize: vertical; min-height: 80px; font-family: monospace; width: 100%; box-sizing: border-box;" placeholder="메타데이터가 표시됩니다..."></textarea>
-                    <small class="help-text">파일 정보 및 태스크 관련 메타데이터</small>
-                </div>
-                
-                <div style="display: none;">
-                    <input type="text" id="spanId">
-                    <input type="text" id="entityId">
-                </div>
-                
                 <div class="field-group">
                     <label>JSON 상세 정보:</label>
                     <textarea id="jsonDisplay" style="
                         width: 100%; 
-                        height: 300px; 
+                        height: 200px; 
                         font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace; 
                         font-size: 12px; 
                         background: #f8f9fa; 
@@ -1230,6 +1218,16 @@
                         color: #333;
                         line-height: 1.4;
                     " placeholder="어노테이션을 선택하면 JSON 정보가 표시됩니다."></textarea>
+                </div>
+                <div class="field-group">
+                    <label>메타데이터 (metadata):</label>
+                    <textarea id="metadata" readonly style="background: #f8f9fa; color: #666; border: 1px solid #e8e8e8; padding: 8px; border-radius: 3px; font-size: 12px; resize: vertical; min-height: 180px; font-family: monospace; width: 100%; box-sizing: border-box;" placeholder="메타데이터가 표시됩니다..."></textarea>
+                    <small class="help-text">파일 정보 및 태스크 관련 메타데이터</small>
+                </div>
+                
+                <div style="display: none;">
+                    <input type="text" id="spanId">
+                    <input type="text" id="entityId">
                 </div>
             </div>
         </div>
