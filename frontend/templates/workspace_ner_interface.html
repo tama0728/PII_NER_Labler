@@ -1123,7 +1123,15 @@
                 <div style="display: flex; gap: 12px; align-items: center;">
                     <button class="btn primary" onclick="loadText()">Load Text</button>
                     <button class="btn" onclick="showUploadModal()">📁 Upload Files</button>
-                    <button class="btn primary" onclick="saveCurrentTask()" id="saveTaskBtn" style="display: none;">💾 Save Task</button>
+                    <button class="btn primary" onclick="saveCurrentTask()" id="saveTaskBtn" style="display: none;">💾 Save (Ctrl+S)</button>
+                    <script>
+                        document.addEventListener('keydown', function(event) {
+                          if (event.ctrlKey && event.key.toLowerCase() === 's') {
+                            event.preventDefault(); // 브라우저 기본 저장 동작 방지
+                            document.getElementById('saveTaskBtn').click(); // 버튼 클릭 이벤트 실행
+                          }
+                        });
+                        </script>
                     <button class="btn" id="exportBtn" onclick="exportAnnotations()" disabled style="opacity: 0.5; cursor: not-allowed;">Export</button>
                 </div>
                 <button class="btn" onclick="resetWorkspace()" style="background-color: #dc3545; color: white; margin-left: auto;">워크스페이스 초기화</button>
