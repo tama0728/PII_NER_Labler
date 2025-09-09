@@ -204,7 +204,7 @@ python app.py --port 8081
 export SECRET_KEY="your-production-secret-key"
 
 # 애플리케이션 실행
-gunicorn app:create_app
+gunicorn --reload 'app:create_app()' --bind 0.0.0.0:8080
 ```
 
 ## 파일 구조 상세
