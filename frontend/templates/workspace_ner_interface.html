@@ -431,7 +431,7 @@
             border-radius: 3px;
             cursor: pointer;
             font-size: 13px;
-            font-weight: 500;
+            font-weight: bold;
             transition: all 0.15s ease;
             text-align: left;
             position: relative;
@@ -446,14 +446,12 @@
         }
         
         .label-item.selected {
-            border: 2px solid #ff0000 !important;
-            box-shadow: 0 0 5px rgba(255, 0, 0, 0.5);
+            /*border: #ff0000 ;
+            box-shadow: 0 0 5px rgba(255, 0, 0, 0.5);*/
+            border-color: #000000;
+            box-shadow: 0 0 0 2px #000000;
         }
         
-        .label-item.filtered {
-            border-color: #00ff00;
-            box-shadow: 0 0 0 2px #00ff00;
-        }
         
         .label-content {
             display: flex;
@@ -1144,7 +1142,7 @@
             <div class="labels-panel-horizontal">
                 {% for label in labels %}
                 <button class="label-item" 
-                        style="background-color: {{ label.background }}; color: white;"
+                        style="background-color: {{ label.background }}; color: black;"
                         data-label="{{ label.value }}"
                         data-label-id="{{ label.value }}"
                         onclick="selectLabel('{{ label.value }}')"
