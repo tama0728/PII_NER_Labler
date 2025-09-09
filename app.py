@@ -320,7 +320,7 @@ def create_app(config_class=Config):
                                 'format': 'jsonl',
                                 'record_count': 'N/A'
                             })
-            
+            files.sort(key=lambda x: x['created_at'], reverse=True)
             return jsonify({'files': files})
         except Exception as e:
             return jsonify({'error': str(e)}), 500
